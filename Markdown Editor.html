@@ -1,0 +1,3023 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Multi-File Text Viewer, Editor &amp; Compiler</title>
+<style>
+:root{
+  --bg:#0d1117;--bg2:#161b22;--bg3:#21262d;--bg4:#2d333b;
+  --border:#30363d;--border2:#484f58;
+  --fg:#f0f6fc;--fg2:#c9d1d9;--fg3:#8b949e;
+  --accent:#1f6feb;--accent2:#388bfd;--accentText:#79c0ff;--accentSoft:rgba(31,111,235,.22);
+  --ok:#3fb950;--okText:#7ee787;--warn:#d29922;--warnText:#e3b341;--err:#f85149;--errText:#ff7b72;
+  --purple:#a371f7;
+  --badge-md-bg:#0d2a5c;--badge-md-fg:#9ec5ff;
+  --badge-txt-bg:#2d333b;--badge-txt-fg:#c9d1d9;
+  --badge-json-bg:#3d2e00;--badge-json-fg:#e3b341;
+  --badge-jsonl-bg:#2c1e4d;--badge-jsonl-fg:#d2b8ff;
+  --badge-csv-bg:#0d3320;--badge-csv-fg:#7ee787;
+  --badge-yaml-bg:#4a1616;--badge-yaml-fg:#ff9999;
+  --pill-valid-bg:#0d3320;--pill-valid-fg:#7ee787;
+  --pill-invalid-bg:#4a1616;--pill-invalid-fg:#ff9999;
+  --pill-mod-bg:#3d2e00;--pill-mod-fg:#e3b341;
+  --pill-saved-bg:#2d333b;--pill-saved-fg:#c9d1d9;
+  --alert-err-bg:#2c0d0d;--alert-err-fg:#ff9999;--alert-err-bd:#6b1e1e;
+  --alert-ok-bg:#0d2a1a;--alert-ok-fg:#7ee787;--alert-ok-bd:#1e5a34;
+  --alert-warn-bg:#2a1f00;--alert-warn-fg:#e3b341;--alert-warn-bd:#6b4d00;
+  --radius:8px;--radius-sm:5px;
+  --mono:ui-monospace,SFMono-Regular,"SF Mono",Menlo,Consolas,"Liberation Mono",monospace;
+  --sans:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+  --tok-key:#79c0ff;--tok-str:#a5d6ff;--tok-num:#f0883e;--tok-bool:#ff7b72;--tok-null:#8b949e;--tok-punc:#c9d1d9;
+}
+[data-theme="light"]{
+  --bg:#f6f8fa;--bg2:#ffffff;--bg3:#eaeef2;--bg4:#dfe3e8;
+  --border:#d0d7de;--border2:#afb8c1;
+  --fg:#1f2328;--fg2:#4a5560;--fg3:#59636e;
+  --accent:#0969da;--accent2:#0550ae;--accentText:#0550ae;--accentSoft:rgba(9,105,218,.14);
+  --ok:#1a7f37;--okText:#0a5220;--warn:#9a6700;--warnText:#6b4800;--err:#cf222e;--errText:#8b1a1a;
+  --purple:#8250df;
+  --badge-md-bg:#d6e7ff;--badge-md-fg:#0a3069;
+  --badge-txt-bg:#e0e5eb;--badge-txt-fg:#2f3742;
+  --badge-json-bg:#fff1cc;--badge-json-fg:#6b4800;
+  --badge-jsonl-bg:#ede4ff;--badge-jsonl-fg:#4c2889;
+  --badge-csv-bg:#d6f5dd;--badge-csv-fg:#0a5220;
+  --badge-yaml-bg:#ffdcdc;--badge-yaml-fg:#8b1a1a;
+  --pill-valid-bg:#d6f5dd;--pill-valid-fg:#0a5220;
+  --pill-invalid-bg:#ffdcdc;--pill-invalid-fg:#8b1a1a;
+  --pill-mod-bg:#fff1cc;--pill-mod-fg:#6b4800;
+  --pill-saved-bg:#e0e5eb;--pill-saved-fg:#2f3742;
+  --alert-err-bg:#fff0f0;--alert-err-fg:#8b1a1a;--alert-err-bd:#f5b8b8;
+  --alert-ok-bg:#eefbf1;--alert-ok-fg:#0a5220;--alert-ok-bd:#b8e6c3;
+  --alert-warn-bg:#fff9e6;--alert-warn-fg:#6b4800;--alert-warn-bd:#f0d999;
+  --tok-key:#0550ae;--tok-str:#0a3069;--tok-num:#953800;--tok-bool:#cf222e;--tok-null:#59636e;--tok-punc:#1f2328;
+}
+*{box-sizing:border-box}
+html,body{height:100%}
+body{margin:0;background:var(--bg);color:var(--fg);font-family:var(--sans);font-size:13px;line-height:1.45;-webkit-font-smoothing:antialiased;overflow:hidden}
+button,input,select,textarea{font-family:inherit;font-size:inherit;color:inherit}
+button{cursor:pointer}
+::-webkit-scrollbar{width:10px;height:10px}
+::-webkit-scrollbar-track{background:transparent}
+::-webkit-scrollbar-thumb{background:var(--border2);border-radius:6px;border:2px solid var(--bg)}
+::-webkit-scrollbar-thumb:hover{background:var(--fg3)}
+.hidden{display:none !important}
+:focus{outline:none}
+:focus-visible{outline:2px solid var(--accentText);outline-offset:2px;border-radius:3px}
+button:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-visible,[tabindex]:focus-visible{outline:2px solid var(--accentText);outline-offset:2px}
+.btn.primary:focus-visible{outline:2px solid var(--accentText);outline-offset:2px;box-shadow:0 0 0 1px var(--bg2)}
+
+#app{display:grid;grid-template-rows:auto 1fr auto;height:100vh;height:100dvh}
+.main{display:grid;grid-template-columns:290px minmax(0,1fr) 300px;min-height:0;overflow:hidden}
+@media(max-width:1100px){.main{grid-template-columns:250px minmax(0,1fr)}.inspector{display:none}}
+@media(max-width:720px){
+  .main{grid-template-columns:minmax(0,1fr)}
+  .sidebar{position:absolute;z-index:40;top:0;bottom:0;left:0;width:280px;transform:translateX(-100%);transition:transform .2s;box-shadow:0 0 30px rgba(0,0,0,.5)}
+  .sidebar.open{transform:translateX(0)}
+}
+.toolbar{display:flex;align-items:center;gap:6px;padding:7px 10px;background:var(--bg2);border-bottom:1px solid var(--border);flex-wrap:wrap}
+.brand{display:flex;align-items:center;gap:8px;margin-right:8px;font-weight:650;font-size:13px;white-space:nowrap;color:var(--fg)}
+.brand .logo{width:22px;height:22px;border-radius:6px;display:grid;place-items:center;font-size:12px;background:linear-gradient(135deg,var(--accent),var(--purple));color:#fff;font-weight:800}
+.tb-sep{width:1px;height:20px;background:var(--border);margin:0 3px}
+.btn{display:inline-flex;align-items:center;gap:5px;padding:5px 9px;border-radius:var(--radius-sm);background:var(--bg3);border:1px solid var(--border);color:var(--fg);font-size:12px;font-weight:500;transition:background .12s,border-color .12s,transform .06s;white-space:nowrap}
+.btn:hover:not(:disabled){background:var(--bg4);border-color:var(--border2)}
+.btn:active:not(:disabled){transform:translateY(1px)}
+.btn:disabled{opacity:.55;cursor:not-allowed}
+.btn.primary{background:var(--accent);border-color:var(--accent);color:#fff}
+.btn.primary:hover:not(:disabled){background:var(--accent2);border-color:var(--accent2)}
+.btn.ghost{background:transparent;border-color:transparent;color:var(--fg2)}
+.btn.ghost:hover:not(:disabled){background:var(--bg3);border-color:var(--border);color:var(--fg)}
+.btn.danger{color:var(--errText)}
+.btn.danger:hover:not(:disabled){background:var(--alert-err-bg);border-color:var(--alert-err-bd);color:var(--errText)}
+.btn.icon{padding:5px 7px}
+.grow{flex:1}
+.search-wrap{position:relative;display:flex;align-items:center}
+.search-wrap input{width:160px;padding:5px 9px 5px 26px;border-radius:var(--radius-sm);background:var(--bg3);border:1px solid var(--border);font-size:12px;color:var(--fg)}
+.search-wrap input::placeholder{color:var(--fg3);opacity:1}
+.search-wrap .ico{position:absolute;left:8px;opacity:.75;font-size:11px;pointer-events:none;color:var(--fg3)}
+.conn{display:inline-flex;align-items:center;gap:5px;font-size:11px;color:var(--fg2);padding:4px 8px;border-radius:99px;background:var(--bg3);border:1px solid var(--border)}
+.conn .dot{width:7px;height:7px;border-radius:50%;background:var(--ok)}
+.conn.off .dot{background:var(--warn)}
+
+.save-status{display:inline-flex;align-items:center;gap:6px;font-size:11px;color:var(--fg2);padding:4px 9px;border-radius:99px;background:var(--bg3);border:1px solid var(--border);white-space:nowrap;transition:border-color .15s}
+.save-status .sdot{width:7px;height:7px;border-radius:50%;background:var(--ok);transition:background .2s;flex-shrink:0}
+.save-status.dirty{border-color:var(--warn);cursor:pointer}
+.save-status.dirty .sdot{background:var(--warn)}
+.save-status.saving{border-color:var(--accentText)}
+.save-status.saving .sdot{background:var(--accentText);animation:pulse .6s infinite}
+.save-status.error{border-color:var(--err)}
+.save-status.error .sdot{background:var(--err)}
+#saveStatusText{display:inline-flex;align-items:center;gap:6px}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.3}}
+
+.sidebar{background:var(--bg2);border-right:1px solid var(--border);display:flex;flex-direction:column;min-height:0}
+.side-head{padding:8px 10px;border-bottom:1px solid var(--border);display:flex;flex-direction:column;gap:6px}
+.side-title{display:flex;align-items:center;justify-content:space-between;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--fg2)}
+.chips{display:flex;gap:4px;flex-wrap:wrap}
+.chip{padding:3px 8px;border-radius:99px;font-size:11px;font-weight:600;border:1px solid var(--border);background:var(--bg3);color:var(--fg2);cursor:pointer;user-select:none}
+.chip:hover{border-color:var(--border2);color:var(--fg)}
+.chip.active{background:var(--accentSoft);border-color:var(--accentText);color:var(--accentText)}
+.filelist{flex:1;overflow-y:auto;overflow-x:hidden;padding:6px 6px 40px}
+.cat{margin-bottom:8px;border-radius:var(--radius);background:var(--bg3);border:1px solid var(--border);overflow:hidden}
+.cat.dragover{border-color:var(--accentText);box-shadow:0 0 0 2px var(--accentSoft)}
+.cat-head{display:flex;align-items:center;gap:6px;padding:6px 8px;background:var(--bg3);cursor:grab;font-size:11.5px;font-weight:650;color:var(--fg2);user-select:none}
+.cat-head:active{cursor:grabbing}
+.cat-head .cname{flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--fg)}
+.cat-head .ccount{font-size:10px;background:var(--bg2);padding:1px 6px;border-radius:99px;color:var(--fg2);border:1px solid var(--border)}
+.cat-head button{background:none;border:0;color:var(--fg2);padding:2px 4px;border-radius:3px;font-size:11px}
+.cat-head button:hover{color:var(--fg);background:var(--bg4)}
+.cat-files{padding:3px}
+.cat-files:empty::after{content:"Drop files here";display:block;padding:10px;text-align:center;font-size:10.5px;color:var(--fg3);font-style:italic}
+.file-row{display:flex;align-items:center;gap:6px;padding:5px 6px;border-radius:var(--radius-sm);cursor:pointer;user-select:none;position:relative;border:1px solid transparent}
+.file-row:hover{background:var(--bg4)}
+.file-row.active{background:var(--accentSoft);border-color:var(--accentText)}
+.file-row.dragover-top::before{content:"";position:absolute;top:-1px;left:4px;right:4px;height:2px;background:var(--accentText);border-radius:2px}
+.file-row.dragging{opacity:.5}
+.file-row .chk{margin:0;accent-color:var(--accent);cursor:pointer;flex-shrink:0;width:14px;height:14px}
+.badge{font-size:9.5px;font-weight:800;letter-spacing:.03em;padding:2px 5px;border-radius:4px;flex-shrink:0;min-width:34px;text-align:center;text-transform:uppercase}
+.b-md{background:var(--badge-md-bg);color:var(--badge-md-fg)}
+.b-txt{background:var(--badge-txt-bg);color:var(--badge-txt-fg)}
+.b-json{background:var(--badge-json-bg);color:var(--badge-json-fg)}
+.b-jsonl{background:var(--badge-jsonl-bg);color:var(--badge-jsonl-fg)}
+.b-csv{background:var(--badge-csv-bg);color:var(--badge-csv-fg)}
+.b-yaml{background:var(--badge-yaml-bg);color:var(--badge-yaml-fg)}
+.file-meta{flex:1;min-width:0}
+.file-name{font-size:12px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--fg)}
+.file-sub{font-size:10px;color:var(--fg3)}
+.dot{width:7px;height:7px;border-radius:50%;flex-shrink:0}
+.dot.mod{background:var(--warn)}
+.dot.saved{background:var(--border2)}
+
+.row-actions{display:flex;align-items:center;gap:1px;flex-shrink:0;opacity:0;transition:opacity .12s}
+.file-row:hover .row-actions,
+.file-row:focus-within .row-actions{opacity:1}
+.row-btn{
+  background:transparent;border:0;color:var(--fg3);
+  padding:2px 5px;border-radius:4px;
+  font-size:12px;line-height:1;font-weight:700;
+  cursor:pointer;flex-shrink:0;
+  transition:color .12s,background .12s;
+}
+.row-btn:hover{background:var(--bg3)}
+.row-btn.dup:hover{color:var(--accentText);background:var(--accentSoft)}
+.row-btn.del:hover{color:var(--errText);background:var(--alert-err-bg)}
+.row-btn:focus-visible{opacity:1;outline:2px solid var(--accentText);outline-offset:1px}
+
+.empty-note{padding:22px 14px;text-align:center;color:var(--fg3);font-size:11.5px;line-height:1.7}
+.inline-rename{width:100%;padding:3px 6px;background:var(--bg2);border:2px solid var(--accentText);border-radius:var(--radius-sm);font:inherit;font-size:12px;color:var(--fg);outline:none}
+.inline-rename:focus{outline:2px solid var(--accentText);outline-offset:1px}
+
+.editor{display:flex;flex-direction:column;min-width:0;background:var(--bg);min-height:0}
+.ed-head{display:flex;align-items:center;gap:8px;padding:7px 10px;background:var(--bg2);border-bottom:1px solid var(--border);flex-wrap:wrap;min-height:42px}
+.ed-name{font-weight:600;font-size:13px;display:flex;align-items:center;gap:7px;min-width:0;color:var(--fg)}
+.ed-name span.t{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:240px}
+.ed-stats{font-size:10.5px;color:var(--fg3);display:flex;gap:9px;flex-wrap:wrap;align-items:center}
+.status-pill{font-size:10px;font-weight:700;padding:2px 7px;border-radius:99px;text-transform:uppercase;letter-spacing:.04em;display:inline-flex;align-items:center}
+.s-valid{background:var(--pill-valid-bg);color:var(--pill-valid-fg)}
+.s-invalid{background:var(--pill-invalid-bg);color:var(--pill-invalid-fg)}
+.s-modified{background:var(--pill-mod-bg);color:var(--pill-mod-fg)}
+.s-saved{background:var(--pill-saved-bg);color:var(--pill-saved-fg)}
+.status-pill.save-hint{
+  text-transform:none;letter-spacing:0;font-weight:600;font-size:10.5px;
+  display:inline-flex;align-items:center;gap:6px;
+  padding:3px 9px;cursor:pointer;font-family:inherit;border:0;
+  transition:filter .12s,transform .06s;
+}
+.status-pill.save-hint:hover{filter:brightness(1.18)}
+.status-pill.save-hint:active{transform:translateY(1px)}
+.info-i{
+  display:inline-flex;align-items:center;justify-content:center;
+  width:13px;height:13px;border-radius:50%;
+  background:transparent;border:1px solid currentColor;
+  font-size:9px;font-weight:800;font-style:italic;font-family:Georgia,serif;
+  color:inherit;padding:0;line-height:1;vertical-align:middle;
+  opacity:.9;flex-shrink:0;text-transform:none;letter-spacing:0;
+  pointer-events:none;
+}
+.seg{display:inline-flex;background:var(--bg3);border:1px solid var(--border);border-radius:var(--radius-sm);overflow:hidden}
+.seg button{padding:4px 10px;font-size:11.5px;font-weight:600;background:transparent;border:0;color:var(--fg2);border-right:1px solid var(--border)}
+.seg button:last-child{border-right:0}
+.seg button:hover{background:var(--bg4);color:var(--fg)}
+.seg button.active{background:var(--accent);color:#fff}
+.code-wrap{position:relative;flex:1;display:flex;min-height:0;overflow:hidden}
+.gutter{width:54px;flex-shrink:0;overflow:hidden;background:var(--bg2);border-right:1px solid var(--border);padding:10px 8px 10px 0;text-align:right;font:12.5px/20px var(--mono);color:var(--fg3);user-select:none;white-space:pre}
+textarea.code{flex:1;border:0;resize:none;outline:none;background:transparent;color:var(--fg);padding:10px 14px;font:12.5px/20px var(--mono);white-space:pre;overflow:auto;tab-size:2;word-wrap:normal;overflow-wrap:normal}
+textarea.code.wrap{white-space:pre-wrap;word-wrap:break-word;overflow-wrap:anywhere}
+pre.formatted{flex:1;margin:0;padding:10px 14px;overflow:auto;font:12.5px/20px var(--mono);white-space:pre;background:var(--bg);color:var(--fg)}
+.editor-empty{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px;color:var(--fg3);text-align:center;padding:30px}
+.editor-empty h3{margin:0;color:var(--fg2);font-size:15px;font-weight:600}
+.editor-empty p{margin:0;font-size:12px;max-width:380px;line-height:1.7}
+.ed-actions{margin-left:auto;display:flex;gap:5px;align-items:center;flex-wrap:wrap}
+
+.preview-pane{flex:1;overflow:auto;background:var(--bg);min-height:0}
+.md-preview{padding:18px 24px 40px;font-size:13.5px;line-height:1.75;color:var(--fg);max-width:920px;margin:0 auto;width:100%;font-family:var(--sans)}
+.md-preview h1{font-size:1.8em;margin:22px 0 10px;font-weight:800;line-height:1.25}
+.md-preview h2{font-size:1.45em;margin:18px 0 8px;font-weight:750;line-height:1.3}
+.md-preview h3{font-size:1.2em;margin:16px 0 6px;font-weight:700;line-height:1.3}
+.md-preview h4{font-size:1.05em;margin:14px 0 6px;font-weight:700}
+.md-preview h5{font-size:.95em;margin:12px 0 5px;font-weight:700;text-transform:uppercase;letter-spacing:.03em}
+.md-preview h6{font-size:.85em;margin:12px 0 5px;font-weight:700;color:var(--fg2);text-transform:uppercase;letter-spacing:.05em}
+.md-preview h1:first-child,.md-preview h2:first-child,.md-preview h3:first-child{margin-top:6px}
+.md-preview p{margin:0 0 11px}
+.md-preview strong{font-weight:700}
+.md-preview em{font-style:italic}
+.md-preview del{text-decoration:line-through;color:var(--fg2)}
+.md-preview code{background:var(--bg3);padding:2px 6px;border-radius:4px;font-family:var(--mono);font-size:.88em;color:var(--accentText)}
+.md-preview pre{background:var(--bg3);border:1px solid var(--border);border-radius:var(--radius);padding:12px 14px;overflow:auto;margin:0 0 14px;font-family:var(--mono)}
+.md-preview pre code{background:none;padding:0;color:var(--fg);font-size:12.5px}
+.md-preview blockquote{border-left:3px solid var(--border2);padding:4px 0 4px 14px;margin:0 0 12px;color:var(--fg2);font-style:italic;background:var(--bg2);border-radius:0 4px 4px 0}
+.md-preview ul{padding-left:26px;margin:0 0 12px;list-style:disc}
+.md-preview ul ul{list-style:circle;margin:4px 0}
+.md-preview ol{padding-left:26px;margin:0 0 12px;list-style:decimal}
+.md-preview li{margin:3px 0;line-height:1.65}
+.md-preview li::marker{color:var(--accentText);font-weight:700}
+.md-preview li>input[type=checkbox]{margin:0 6px 0 0;accent-color:var(--accent);vertical-align:middle}
+.md-preview hr{border:0;border-top:1px solid var(--border);margin:20px 0}
+.md-preview a{color:var(--accentText);text-decoration:none;border-bottom:1px solid transparent}
+.md-preview a:hover{border-bottom-color:var(--accentText)}
+.md-preview img{max-width:100%;border-radius:var(--radius);margin:6px 0}
+.md-preview table{border-collapse:collapse;margin:0 0 14px;width:100%;font-size:12.5px;border:1px solid var(--border)}
+.md-preview th,.md-preview td{border:1px solid var(--border);padding:7px 10px;text-align:left;vertical-align:top}
+.md-preview th{background:var(--bg3);font-weight:700;color:var(--fg)}
+.md-preview tr:nth-child(even) td{background:var(--bg2)}
+
+.code-preview{flex:1;overflow:auto;padding:0;height:100%}
+.code-pre{margin:0;padding:14px 18px;font:12.5px/1.65 var(--mono);white-space:pre;color:var(--fg);background:var(--bg);overflow:auto;min-height:100%;box-sizing:border-box;tab-size:2}
+.tok-key{color:var(--tok-key);font-weight:600}
+.tok-str{color:var(--tok-str)}
+.tok-num{color:var(--tok-num)}
+.tok-bool{color:var(--tok-bool);font-weight:600}
+.tok-null{color:var(--tok-null);font-style:italic}
+.tok-punc{color:var(--tok-punc)}
+
+.csv-preview{flex:1;overflow:auto;padding:14px 18px;height:100%;box-sizing:border-box}
+.csv-pre{margin:0;padding:14px 16px;font:12.5px/1.85 var(--mono);white-space:pre;overflow:auto;color:var(--fg);background:var(--bg3);border:1px solid var(--border);border-radius:var(--radius)}
+.csv-comma{color:var(--accentText);font-weight:900;padding:0 2px;font-size:1.15em;line-height:1;vertical-align:-1px;text-shadow:0 0 1px var(--accentText)}
+.csv-header{color:var(--warnText);font-weight:800}
+.csv-empty{padding:24px;text-align:center;color:var(--fg3);font-size:12px}
+
+.inspector{background:var(--bg2);border-left:1px solid var(--border);display:flex;flex-direction:column;min-height:0;overflow-y:auto}
+.panel{padding:10px 12px;border-bottom:1px solid var(--border)}
+.panel h4{margin:0 0 8px;font-size:11px;text-transform:uppercase;letter-spacing:.06em;color:var(--fg2);font-weight:700}
+.kv{display:flex;justify-content:space-between;gap:10px;font-size:11.5px;padding:3px 0;border-bottom:1px dashed var(--border)}
+.kv:last-child{border-bottom:0}
+.kv .k{color:var(--fg3)}
+.kv .v{color:var(--fg);font-weight:500;text-align:right;word-break:break-word;font-family:var(--mono);font-size:11px}
+.stat-grid{display:grid;grid-template-columns:1fr 1fr;gap:6px}
+.stat{background:var(--bg3);border:1px solid var(--border);border-radius:var(--radius-sm);padding:7px 9px}
+.stat .n{font-size:16px;font-weight:700;font-family:var(--mono);color:var(--fg)}
+.stat .l{font-size:9.5px;text-transform:uppercase;letter-spacing:.05em;color:var(--fg3)}
+.alert{padding:8px 10px;border-radius:var(--radius-sm);font-size:11px;line-height:1.55;margin-top:6px;border:1px solid}
+.alert.err{background:var(--alert-err-bg);color:var(--alert-err-fg);border-color:var(--alert-err-bd)}
+.alert.ok{background:var(--alert-ok-bg);color:var(--alert-ok-fg);border-color:var(--alert-ok-bd)}
+.alert.warn{background:var(--alert-warn-bg);color:var(--alert-warn-fg);border-color:var(--alert-warn-bd)}
+.hint{font-size:10.5px;color:var(--fg3);line-height:1.6;margin-top:6px}
+.guide-tabs{display:flex;gap:3px;flex-wrap:wrap;margin-bottom:8px}
+.guide-tab{padding:3px 7px;font-size:10px;font-weight:600;color:var(--fg2);background:var(--bg3);border:1px solid var(--border);border-radius:99px}
+.guide-tab:hover{color:var(--fg);border-color:var(--border2)}
+.guide-tab.active{background:var(--accentSoft);color:var(--accentText);border-color:var(--accentText)}
+.guide-item{margin-bottom:8px}
+.guide-item:last-child{margin-bottom:0}
+.guide-label-row{display:flex;align-items:center;justify-content:space-between;gap:6px;margin-bottom:3px}
+.guide-label{font-size:11px;font-weight:600;color:var(--fg2)}
+.guide-insert{padding:1px 6px;font-size:10px;font-weight:600;background:var(--bg3);color:var(--accentText);border:1px solid var(--accentText);border-radius:99px;cursor:pointer;transition:background .12s}
+.guide-insert:hover{background:var(--accentSoft)}
+.guide-code{background:var(--bg);border:1px solid var(--border);border-radius:var(--radius-sm);padding:6px 8px;font:11px/1.55 var(--mono);white-space:pre-wrap;word-break:break-word;margin:0;color:var(--fg)}
+
+.statusbar{display:flex;align-items:center;gap:14px;padding:5px 12px;background:var(--bg2);border-top:1px solid var(--border);font-size:11px;color:var(--fg2);flex-wrap:wrap}
+.statusbar b{color:var(--fg);font-weight:600;font-family:var(--mono)}
+
+.modal-root{position:fixed;inset:0;z-index:100;display:flex;align-items:center;justify-content:center;padding:18px}
+.modal-backdrop{position:absolute;inset:0;background:rgba(0,0,0,.6);backdrop-filter:blur(2px)}
+.modal{position:relative;background:var(--bg2);border:1px solid var(--border2);border-radius:12px;box-shadow:0 24px 60px rgba(0,0,0,.55);max-height:92vh;display:flex;flex-direction:column;width:min(1000px,100%);animation:pop .13s ease-out}
+.modal.sm{width:min(460px,100%)}
+.modal.md{width:min(620px,100%)}
+@keyframes pop{from{transform:scale(.97);opacity:0}to{transform:scale(1);opacity:1}}
+.modal-head{display:flex;align-items:center;gap:10px;padding:12px 16px;border-bottom:1px solid var(--border)}
+.modal-head h3{margin:0;font-size:14px;font-weight:650;flex:1;color:var(--fg)}
+.modal-body{padding:16px;overflow-y:auto;min-height:0}
+.modal-foot{display:flex;gap:8px;justify-content:flex-end;padding:12px 16px;border-top:1px solid var(--border);flex-wrap:wrap}
+.field{display:flex;flex-direction:column;gap:5px;margin-bottom:12px}
+.field label{font-size:11px;font-weight:600;color:var(--fg2);text-transform:uppercase;letter-spacing:.04em}
+.field input[type=text],.field select,.field textarea{padding:7px 9px;border-radius:var(--radius-sm);background:var(--bg3);border:1px solid var(--border);font-size:12.5px;width:100%;color:var(--fg)}
+.field textarea{font-family:var(--mono);font-size:12px;min-height:110px;resize:vertical}
+.row{display:flex;gap:12px;flex-wrap:wrap}
+.row>.field{flex:1;min-width:150px}
+.opt-check{display:flex;align-items:center;gap:7px;font-size:12px;padding:4px 0;cursor:pointer;color:var(--fg)}
+.opt-check input{accent-color:var(--accent);cursor:pointer;width:14px;height:14px}
+.merge-grid{display:grid;grid-template-columns:250px minmax(0,1fr);gap:16px}
+@media(max-width:820px){.merge-grid{grid-template-columns:1fr}}
+.src-list{border:1px solid var(--border);border-radius:var(--radius);max-height:340px;overflow-y:auto;padding:5px;background:var(--bg3)}
+.src-item{display:flex;align-items:center;gap:7px;padding:5px 7px;border-radius:var(--radius-sm);cursor:grab;font-size:11.5px;color:var(--fg)}
+.src-item:hover{background:var(--bg4)}
+.src-item.dragging{opacity:.5}
+.src-item.dragover-top{box-shadow:inset 0 2px 0 var(--accentText)}
+.src-item .nm{flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.tabs{display:flex;gap:3px;border-bottom:1px solid var(--border);margin-bottom:10px}
+.tab{padding:6px 12px;font-size:12px;font-weight:600;color:var(--fg2);border:0;background:none;border-bottom:2px solid transparent;margin-bottom:-1px}
+.tab:hover{color:var(--fg)}
+.tab.active{color:var(--accentText);border-bottom-color:var(--accentText)}
+.preview-box{background:var(--bg);border:1px solid var(--border);border-radius:var(--radius);padding:10px;font:11.5px/18px var(--mono);white-space:pre-wrap;overflow:auto;max-height:340px;min-height:180px;word-break:break-word;color:var(--fg)}
+.legend{display:flex;gap:12px;flex-wrap:wrap;font-size:11px;color:var(--fg2);margin-bottom:10px}
+.legend b{color:var(--fg);font-family:var(--mono)}
+
+.toasts{position:fixed;bottom:44px;right:16px;z-index:200;display:flex;flex-direction:column;gap:8px;align-items:flex-end;pointer-events:none}
+.toast{pointer-events:auto;background:var(--bg2);border:1px solid var(--border2);border-left:3px solid var(--accentText);border-radius:var(--radius);padding:9px 13px;font-size:12px;box-shadow:0 10px 26px rgba(0,0,0,.4);animation:slideIn .18s ease-out;max-width:340px;color:var(--fg)}
+.toast.ok{border-left-color:var(--ok)}
+.toast.err{border-left-color:var(--err)}
+.toast.warn{border-left-color:var(--warn)}
+@keyframes slideIn{from{transform:translateX(20px);opacity:0}to{transform:translateX(0);opacity:1}}
+.sr-only{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}
+</style>
+</head>
+<body>
+<div id="app">
+  <header class="toolbar" role="toolbar" aria-label="Main toolbar">
+    <div class="brand"><div class="logo" aria-hidden="true">M</div><span>Multi-File Compiler</span></div>
+    <button class="btn ghost icon" id="btnSidebar" title="Toggle sidebar" aria-label="Toggle sidebar">☰</button>
+    <div class="tb-sep" role="separator"></div>
+    <button class="btn" id="btnNew" title="Create new file (Ctrl+N)">＋ New</button>
+    <button class="btn" id="btnSample" title="Add sample files to workspace">✨ Start with Sample</button>
+    <button class="btn" id="btnImportFiles" title="Import multiple files (TXT, MD, JSON, JSONL, CSV, YAML only)">⬆ Import Files</button>
+    <button class="btn" id="btnImportFolder" title="Import an entire folder (filtered by extension)">📁 Import Folder</button>
+    <input type="file" id="fileInput" multiple accept=".txt,.text,.md,.markdown,.csv,.json,.jsonl,.ndjson,.yaml,.yml" class="sr-only" aria-hidden="true">
+    <input type="file" id="folderInput" webkitdirectory directory multiple class="sr-only" aria-hidden="true">
+    <div class="tb-sep" role="separator"></div>
+    <button class="btn" id="btnSaveAs" title="Save as new file">Save As</button>
+    <button class="btn" id="btnExport" title="Export active file to disk">⬇ Export</button>
+    <div class="tb-sep" role="separator"></div>
+    <button class="btn primary" id="btnMerge" title="Merge / Compile (Ctrl+M)">⚙ Merge</button>
+    <button class="btn" id="btnMergeSelected" title="Merge checked files">✓ Merge Selected</button>
+    <div class="tb-sep" role="separator"></div>
+    <button class="btn ghost icon" id="btnUndo" title="Undo (Ctrl+Z)" aria-label="Undo">↶</button>
+    <button class="btn ghost icon" id="btnRedo" title="Redo (Ctrl+Y)" aria-label="Redo">↷</button>
+    <div class="tb-sep" role="separator"></div>
+    <button class="btn danger" id="btnClearAll" title="Remove all files, wipe IndexedDB and session storage">🧹 Clear All Files</button>
+    <div class="grow"></div>
+    <div class="save-status" id="saveStatus" role="status" aria-live="polite"><span class="sdot"></span><span id="saveStatusText">Autosave</span></div>
+    <div class="search-wrap">
+      <span class="ico" aria-hidden="true">🔍</span>
+      <input type="text" id="search" placeholder="Search files..." aria-label="Search files by name">
+    </div>
+    <button class="btn ghost icon" id="btnTheme" title="Toggle theme" aria-label="Toggle theme">🌙</button>
+    <button class="btn ghost icon" id="btnReset" title="Reset workspace (wipes everything and reloads)" aria-label="Reset workspace">⟲</button>
+    <div class="conn" id="conn" role="status" aria-live="polite"><span class="dot"></span><span id="connText">Online</span></div>
+  </header>
+
+  <div class="main" id="mainGrid">
+    <aside class="sidebar" id="sidebar" aria-label="File and category manager">
+      <div class="side-head">
+        <div class="side-title">
+          <span>Workspace Files</span>
+          <span style="display:flex;gap:4px">
+            <button class="btn ghost icon" id="btnRescan" title="Rescan all files" aria-label="Rescan all files" style="font-size:11px;padding:1px 5px">⟳</button>
+            <button class="btn ghost icon" id="btnNewCat" title="New category" style="font-size:11px;padding:1px 5px">＋Cat</button>
+          </span>
+        </div>
+        <div class="chips" id="formatChips" role="tablist" aria-label="Filter by format"></div>
+        <div style="display:flex;gap:5px">
+          <button class="btn ghost" id="btnCheckAll" style="flex:1;justify-content:center;font-size:11px" title="Check all visible files">☑ Check All</button>
+          <button class="btn ghost" id="btnUncheckAll" style="flex:1;justify-content:center;font-size:11px" title="Uncheck every file">☐ Clear</button>
+        </div>
+        <div style="display:flex;gap:5px">
+          <button class="btn ghost danger" id="btnRemoveSelected" style="flex:1;justify-content:center;font-size:11px" title="Remove all checked files from workspace">🗑 Remove Selected <span id="rmSelCount"></span></button>
+          <button class="btn ghost danger" id="btnRemoveAll" style="flex:1;justify-content:center;font-size:11px" title="Remove every file and wipe storage">🗑 Remove All</button>
+        </div>
+      </div>
+      <div class="filelist" id="fileList" role="list" aria-label="File list"></div>
+    </aside>
+
+    <section class="editor" id="editorPane" aria-label="Editor"></section>
+    <aside class="inspector" id="inspector" aria-label="Information panel"></aside>
+  </div>
+
+  <footer class="statusbar" id="statusbar" role="status" aria-live="polite"></footer>
+</div>
+
+<div class="modal-root hidden" id="mergeModal" role="dialog" aria-modal="true" aria-labelledby="mergeTitle">
+  <div class="modal-backdrop" data-close="mergeModal"></div>
+  <div class="modal">
+    <div class="modal-head"><h3 id="mergeTitle">⚙ Merge / Compile Workspace</h3><button class="btn ghost icon" data-close="mergeModal" aria-label="Close">✕</button></div>
+    <div class="modal-body">
+      <div class="row" style="margin-bottom:14px">
+        <div class="field" style="margin:0"><label for="mScope">Source</label>
+          <select id="mScope"><option value="all">All Files</option><option value="checked">Checked Files</option><option value="active">Active File Only</option><option value="category">By Category</option><option value="format">By Format</option></select>
+        </div>
+        <div class="field" style="margin:0" id="mScopeCatWrap"><label for="mScopeCat">Category</label><select id="mScopeCat"></select></div>
+        <div class="field" style="margin:0" id="mScopeFmtWrap"><label for="mScopeFmt">Format</label><select id="mScopeFmt"></select></div>
+        <div class="field" style="margin:0"><label for="mOutFmt">Output Format</label>
+          <select id="mOutFmt"><option value="md">Markdown (.md)</option><option value="txt">Plain Text (.txt)</option><option value="json">JSON (.json)</option><option value="jsonl">JSONL / NDJSON (.jsonl)</option><option value="csv">CSV (.csv)</option><option value="yaml">YAML (.yaml)</option></select>
+        </div>
+        <div class="field" style="margin:0"><label for="mMode">Mode</label>
+          <select id="mMode"><option value="lossless">Lossless Merge</option><option value="structured">Structured Merge</option><option value="auto">Auto (match output format)</option></select>
+        </div>
+      </div>
+      <div class="merge-grid">
+        <div>
+          <div style="font-size:11px;font-weight:700;color:var(--fg2);text-transform:uppercase;letter-spacing:.05em;margin-bottom:7px">Source Order <span id="mSrcCount" style="color:var(--fg3)"></span></div>
+          <div class="src-list" id="mSrcList"></div>
+          <div style="font-size:10.5px;color:var(--fg3);margin-top:6px;line-height:1.6">Drag &amp; drop to reorder.</div>
+        </div>
+        <div>
+          <div class="row" style="gap:10px">
+            <div class="field" style="margin:0;flex:1;min-width:170px"><label for="mSep">Separator / Divider</label>
+              <select id="mSep"><option value="none">None (no separator)</option><option value="file" selected>File Header (===== FILE: x =====)</option><option value="heading">Markdown Heading (# Name)</option><option value="comment">Comment Block</option><option value="divider">Plain Text Divider</option></select>
+            </div>
+            <div class="field" style="margin:0;flex:1;min-width:170px" id="mStrategyWrap"><label for="mStrategy">Structure Strategy</label>
+              <select id="mStrategy"><option value="documents">Collection (documents array)</option><option value="array">Flat Array (merge items)</option><option value="merge">Deep Merge Object</option><option value="multidoc">Multi-Document (---)</option></select>
+            </div>
+            <div class="field" style="margin:0;flex:1;min-width:170px"><label for="mCsvStrategy">CSV Column Strategy</label>
+              <select id="mCsvStrategy"><option value="union">Union Columns</option><option value="same">Same Columns (append rows)</option></select>
+            </div>
+          </div>
+          <div style="display:flex;flex-wrap:wrap;gap:16px;margin:12px 0">
+            <label class="opt-check"><input type="checkbox" id="mOrder" checked> Preserve Source Order</label>
+            <label class="opt-check"><input type="checkbox" id="mMeta"> Include Output Metadata</label>
+            <label class="opt-check"><input type="checkbox" id="mCompact"> Compact Merge</label>
+            <label class="opt-check"><input type="checkbox" id="mDedupe"> Remove Duplicates (explicit)</label>
+          </div>
+          <div class="tabs" role="tablist">
+            <button class="tab active" data-mtab="after" role="tab" aria-selected="true">✅ Merged Result (After)</button>
+            <button class="tab" data-mtab="before" role="tab" aria-selected="false">📋 Sources (Before)</button>
+          </div>
+          <div class="legend" id="mLegend"></div>
+          <div id="mWarnings"></div>
+          <div class="preview-box" id="mPreview" aria-live="polite"></div>
+        </div>
+      </div>
+      <div class="row" style="margin-top:14px;align-items:flex-end">
+        <div class="field" style="margin:0;flex:2;min-width:200px"><label for="mOutName">Output File Name</label><input type="text" id="mOutName" value="compiled-output.md"></div>
+      </div>
+    </div>
+    <div class="modal-foot">
+      <button class="btn" data-close="mergeModal">Cancel</button>
+      <button class="btn" id="mCopy">📋 Copy Result</button>
+      <button class="btn" id="mDownload">⬇ Download</button>
+      <button class="btn primary" id="mSaveAs">💾 Save As (New File)</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal-root hidden" id="promptModal" role="dialog" aria-modal="true" aria-labelledby="pTitle">
+  <div class="modal-backdrop" data-close="promptModal"></div>
+  <div class="modal sm">
+    <div class="modal-head"><h3 id="pTitle">Prompt</h3><button class="btn ghost icon" data-close="promptModal" aria-label="Close">✕</button></div>
+    <div class="modal-body" id="pBody"></div>
+    <div class="modal-foot"><button class="btn" data-close="promptModal">Cancel</button><button class="btn primary" id="pOk">OK</button></div>
+  </div>
+</div>
+
+<div class="modal-root hidden" id="confirmModal" role="dialog" aria-modal="true" aria-labelledby="cTitle">
+  <div class="modal-backdrop" data-close="confirmModal"></div>
+  <div class="modal sm">
+    <div class="modal-head"><h3 id="cTitle">Confirmation</h3></div>
+    <div class="modal-body"><div id="cMsg" style="font-size:13px;line-height:1.7"></div></div>
+    <div class="modal-foot"><button class="btn" data-close="confirmModal" id="cCancel">Cancel</button><button class="btn danger" id="cOk">Yes, Continue</button></div>
+  </div>
+</div>
+
+<div class="modal-root hidden" id="saveInfoModal" role="dialog" aria-modal="true" aria-labelledby="siTitle">
+  <div class="modal-backdrop" data-close="saveInfoModal"></div>
+  <div class="modal sm">
+    <div class="modal-head"><h3 id="siTitle">💾 How saving works</h3><button class="btn ghost icon" data-close="saveInfoModal" aria-label="Close">✕</button></div>
+    <div class="modal-body" style="font-size:13px;line-height:1.75">
+      <p style="margin:0 0 12px"><b>While you type, changes are autosaved after a short pause.</b> The current session is kept in browser storage so refresh can restore the workspace.</p>
+      <ul style="margin:0 0 14px;padding-left:22px;line-height:1.9">
+        <li><b>Pause typing</b> — the workspace autosaves.</li>
+        <li><b>Click away from the editor</b> — the active file is saved.</li>
+        <li><b>Switch files</b> — the previous file saves automatically.</li>
+        <li><b>Switch browser tabs / windows</b> — pending edits save.</li>
+        <li><b>Ctrl+S</b> (or ⌘+S) — saves all files with unsaved changes.</li>
+        <li><b>Refresh / reopen</b> — the latest committed session is restored.</li>
+      </ul>
+      <p style="margin:0;color:var(--fg3);font-size:12px">Deleted files never return after refresh: every state change is persisted synchronously to local storage, so the latest list (with deletions applied) is always what gets restored.</p>
+    </div>
+    <div class="modal-foot"><button class="btn primary" data-close="saveInfoModal">Got it</button></div>
+  </div>
+</div>
+
+<div class="modal-root hidden" id="rejectedModal" role="dialog" aria-modal="true" aria-labelledby="rjTitle">
+  <div class="modal-backdrop" data-close="rejectedModal"></div>
+  <div class="modal md">
+    <div class="modal-head"><h3 id="rjTitle">⚠ Import skipped</h3><button class="btn ghost icon" data-close="rejectedModal" aria-label="Close">✕</button></div>
+    <div class="modal-body">
+      <p style="margin:0 0 12px;font-size:13px;line-height:1.7">
+        Only these formats are supported:
+        <b>TXT · TEXT · MD · MARKDOWN · CSV · JSON · JSONL · NDJSON · YAML · YML</b>.
+        All other extensions were skipped.
+      </p>
+      <div id="rjList" style="background:var(--bg);border:1px solid var(--border);border-radius:var(--radius);padding:10px;font:11.5px/1.65 var(--mono);max-height:280px;overflow:auto;color:var(--fg2)"></div>
+    </div>
+    <div class="modal-foot"><button class="btn primary" data-close="rejectedModal">Got it</button></div>
+  </div>
+</div>
+
+<div class="toasts" id="toasts" role="region" aria-live="polite" aria-label="Notifications"></div>
+
+<script>
+"use strict";
+/* =========================================================================
+   UTILITIES
+   ========================================================================= */
+const $  = (s, r = document) => r.querySelector(s);
+const $$ = (s, r = document) => Array.from(r.querySelectorAll(s));
+const uid = () => Math.random().toString(36).slice(2, 10) + Date.now().toString(36).slice(-4);
+const esc = s => String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+function fmtBytes(n){ if (n<1024) return n+' B'; if (n<1024*1024) return (n/1024).toFixed(1)+' KB'; return (n/1024/1024).toFixed(2)+' MB'; }
+function countLines(s){ return s === '' ? 0 : s.split('\n').length; }
+function baseName(name){ return name.replace(/\.[^.]+$/, ''); }
+function extOf(name){ const m = /\.([^.]+)$/.exec(name); return m ? m[1].toLowerCase() : ''; }
+function debounce(fn, ms){ let t=null; const d=(...a)=>{ clearTimeout(t); t=setTimeout(()=>{ t=null; fn(...a); },ms); }; d.cancel=()=>{ if(t){ clearTimeout(t); t=null; } }; return d; }
+function toast(msg, type='', ms=2800){
+  const el = document.createElement('div');
+  el.className = 'toast ' + type;
+  el.textContent = msg;
+  $('#toasts').appendChild(el);
+  setTimeout(()=>{ el.style.opacity='0'; el.style.transition='opacity .25s'; setTimeout(()=>el.remove(),260); }, ms);
+}
+function confirmDialog(title, msg, okLabel='Yes, Continue'){
+  return new Promise(resolve => {
+    $('#cTitle').textContent = title;
+    $('#cMsg').innerHTML = msg;
+    $('#cOk').textContent = okLabel;
+    const root = $('#confirmModal');
+    root.classList.remove('hidden');
+    const done = v => { root.classList.add('hidden'); $('#cOk').onclick = null; $('#cCancel').onclick = null; resolve(v); };
+    $('#cOk').onclick = () => done(true);
+    $('#cCancel').onclick = () => done(false);
+  });
+}
+function openSaveInfo(){ $('#saveInfoModal').classList.remove('hidden'); }
+
+/* =========================================================================
+   ALLOWED EXTENSIONS
+   ========================================================================= */
+const ALLOWED_EXTENSIONS = new Set(['txt','text','md','markdown','csv','json','jsonl','ndjson','yaml','yml']);
+function isExtensionAllowed(filename){
+  const ext = extOf(filename);
+  if (!ext) return false;
+  return ALLOWED_EXTENSIONS.has(ext);
+}
+function showRejectedFiles(rejected){
+  if (!rejected || !rejected.length) return;
+  const list = $('#rjList');
+  const sorted = rejected.slice().sort((a, b) => extOf(a).localeCompare(extOf(b)));
+  list.innerHTML = sorted.map((name, i) =>
+    `<div style="padding:3px 0;border-bottom:1px dashed var(--border)">${i+1}. ${esc(name)}<span style="color:var(--fg3);margin-left:8px">.${esc(extOf(name) || 'no-ext')}</span></div>`
+  ).join('');
+  $('#rejectedModal').classList.remove('hidden');
+}
+
+/* =========================================================================
+   FORMAT
+   ========================================================================= */
+const FORMATS = {
+  txt:{label:'TXT',cls:'b-txt',ext:'txt',mime:'text/plain'},
+  md:{label:'MD',cls:'b-md',ext:'md',mime:'text/markdown'},
+  json:{label:'JSON',cls:'b-json',ext:'json',mime:'application/json'},
+  jsonl:{label:'JSONL',cls:'b-jsonl',ext:'jsonl',mime:'application/x-ndjson'},
+  csv:{label:'CSV',cls:'b-csv',ext:'csv',mime:'text/csv'},
+  yaml:{label:'YAML',cls:'b-yaml',ext:'yaml',mime:'text/yaml'}
+};
+const EXT_MAP = {txt:'txt',text:'txt',log:'txt',ini:'txt',cfg:'txt',conf:'txt',md:'md',markdown:'md',mdx:'md',json:'json',jsonc:'json',geojson:'json',jsonl:'jsonl',ndjson:'jsonl',csv:'csv',tsv:'csv',yaml:'yaml',yml:'yaml'};
+function formatFromExt(name){ return EXT_MAP[extOf(name)] || null; }
+function detectFormat(name, content){
+  const byExt = formatFromExt(name);
+  if (byExt) return byExt;
+  const c = (content || '').trim();
+  if (!c) return 'txt';
+  if ((c.startsWith('{')&&c.endsWith('}'))||(c.startsWith('[')&&c.endsWith(']'))){ try{ JSON.parse(c); return 'json'; }catch(e){} }
+  const lines = c.split('\n').filter(l=>l.trim());
+  if (lines.length>1 && lines.every(l=>{ try{ JSON.parse(l); return true; }catch(e){ return false; } })) return 'jsonl';
+  if (lines.length>1 && lines.every(l=>l.includes(',')||l.includes(';')||l.includes('\t'))) return 'csv';
+  if (/^[\w.-]+\s*:/m.test(c) || /^\s*-\s+/m.test(c)) return 'yaml';
+  if (/^#{1,6}\s|\*\*|^\s*[-*]\s/m.test(c)) return 'md';
+  return 'txt';
+}
+function isStructured(f){ return f==='json'||f==='jsonl'||f==='csv'||f==='yaml'; }
+function fmtLabel(f){ return (FORMATS[f]||FORMATS.txt).label; }
+function fmtCls(f){ return (FORMATS[f]||FORMATS.txt).cls; }
+
+/* =========================================================================
+   FORMAT GUIDES
+   ========================================================================= */
+const GUIDES = {
+  txt:{ title:'Plain Text (.txt) — Writing Guide', items:[
+    {label:'Content', code:'Every character is literal. No markup syntax.'},
+    {label:'Line break', code:'Press Enter'},
+    {label:'Paragraph', code:'Separate blocks with a blank line'},
+    {label:'Indentation', code:'  Two spaces at the start of a line'},
+    {label:'Line separator', code:'------------------------------'},
+    {label:'Unicode', code:'UTF-8 safe — emoji & accents work natively'}
+  ]},
+  md:{ title:'Markdown (.md) — Writing & Styling Guide', items:[
+    {label:'Heading 1 (H1)', code:'# Title'},
+    {label:'Heading 2 (H2)', code:'## Subtitle'},
+    {label:'Heading 3 (H3)', code:'### Sub-subtitle'},
+    {label:'Heading 4–6', code:'#### Heading 4\n##### Heading 5\n###### Heading 6'},
+    {label:'Bold', code:'**bold text**'},
+    {label:'Italic', code:'*italic* or _italic_'},
+    {label:'Bold + Italic', code:'***both***'},
+    {label:'Strikethrough', code:'~~struck out~~'},
+    {label:'Inline code', code:'`const x = 1`'},
+    {label:'Code block', code:'```js\nconsole.log("hi")\n```'},
+    {label:'Bullet list', code:'- First item\n- Second item\n- Third item'},
+    {label:'Numbered list', code:'1. First\n2. Second\n3. Third'},
+    {label:'Task list', code:'- [x] Done\n- [ ] Todo'},
+    {label:'Link', code:'[label](https://example.com)'},
+    {label:'Image', code:'![alt text](image.png)'},
+    {label:'Blockquote', code:'> Quoted text'},
+    {label:'Horizontal rule', code:'---'},
+    {label:'Table', code:'| Col A | Col B |\n|-------|-------|\n| a     | b     |\n| c     | d     |'},
+    {label:'Line break in paragraph', code:'End a line with two spaces, then press Enter'}
+  ]},
+  json:{ title:'JSON (.json) — Writing Guide', items:[
+    {label:'Object', code:'{\n  "key": "value"\n}'},
+    {label:'Array', code:'[1, 2, 3]'},
+    {label:'Nested structure', code:'{\n  "user": {\n    "name": "Ana",\n    "tags": ["a", "b"]\n  }\n}'},
+    {label:'String', code:'"double quotes only"'},
+    {label:'Number', code:'42'},
+    {label:'Boolean', code:'true'},
+    {label:'Null', code:'null'},
+    {label:'Rule — keys', code:'Keys must be wrapped in double quotes.'},
+    {label:'Rule — commas', code:'No trailing comma before } or ]'},
+    {label:'Rule — top level', code:'Top level must be an object { } or an array [ ]'}
+  ]},
+  jsonl:{ title:'JSONL / NDJSON (.jsonl, .ndjson) — Writing Guide', items:[
+    {label:'One record per line', code:'{ "id": 1, "name": "A" }\n{ "id": 2, "name": "B" }'},
+    {label:'No commas between lines', code:'Each line is a complete JSON value on its own.'},
+    {label:'Blank lines', code:'Allowed — ignored by parsers.'},
+    {label:'Each line valid JSON', code:'Object { } or array [ ] or scalar (string, number)'},
+    {label:'Also known as', code:'NDJSON (Newline Delimited JSON)'}
+  ]},
+  csv:{ title:'CSV (.csv) — Writing Guide', items:[
+    {label:'Header row (first line)', code:'name,age,city'},
+    {label:'Data rows', code:'Ana,30,Jakarta\nBudi,25,Bandung'},
+    {label:'Quoting a field', code:'"Hello, world",42'},
+    {label:'Escaped quotes inside field', code:'"She said ""hi""",42'},
+    {label:'Line separator', code:'Newline (CRLF also accepted)'},
+    {label:'Delimiters supported', code:'Comma (,) default · Semicolon (;) · Tab'},
+    {label:'Rule — headers unique', code:'Duplicate column names auto-deduplicated on parse.'}
+  ]},
+  yaml:{ title:'YAML (.yaml, .yml) — Writing Guide', items:[
+    {label:'Key / value', code:'name: Ana'},
+    {label:'Nested object', code:'user:\n  name: Ana\n  age: 30'},
+    {label:'List', code:'skills:\n  - writing\n  - coding'},
+    {label:'Inline list', code:'skills: [writing, coding]'},
+    {label:'Inline object', code:'user: { name: Ana, age: 30 }'},
+    {label:'Multiline string (literal)', code:'bio: |\n  Line one\n  Line two'},
+    {label:'Multiline string (folded)', code:'bio: >\n  Line one\n  Line two'},
+    {label:'Multi-document', code:'---\ndoc: 1\n---\ndoc: 2'},
+    {label:'Comment', code:'# this is a comment'},
+    {label:'Rule — indentation', code:'Use spaces only, never tabs. Two spaces per level.'},
+    {label:'Rule — colon spacing', code:'A colon must be followed by a space:  key: value'}
+  ]}
+};
+
+/* =========================================================================
+   PARSERS
+   ========================================================================= */
+function parseJSON(text){
+  try { return { ok:true, data: JSON.parse(text) }; }
+  catch(e){
+    const m = /position\s+(\d+)/i.exec(e.message); let loc='';
+    if (m){ const pos=+m[1]; const before=text.slice(0,pos); const line=before.split('\n').length; const col=pos-before.lastIndexOf('\n'); loc=` (line ${line}, col ${col})`; }
+    return { ok:false, error:e.message+loc };
+  }
+}
+function parseJSONL(text){
+  const lines = text.split('\n'); const records=[]; const errors=[];
+  lines.forEach((ln,i)=>{ const t=ln.trim(); if(!t) return; try{ records.push(JSON.parse(t)); }catch(e){ errors.push(`line ${i+1}: ${e.message}`); } });
+  if (errors.length) return { ok:false, error:errors.slice(0,5).join('; ')+(errors.length>5?` … (+${errors.length-5} more)`:''), records };
+  return { ok:true, records };
+}
+function detectDelimiter(text){
+  const sample = text.split('\n').slice(0,8).join('\n');
+  const counts = {',':0,';':0,'\t':0,'|':0}; let inQ=false;
+  for (const ch of sample){ if (ch==='"') inQ=!inQ; else if (!inQ && ch in counts) counts[ch]++; }
+  let best=',', bestN=0; for (const k in counts) if (counts[k]>bestN){ bestN=counts[k]; best=k; }
+  return bestN===0 ? ',' : best;
+}
+function parseCSV(text, delim){
+  delim = delim || detectDelimiter(text);
+  const rows=[]; let row=[], field='', inQ=false, i=0;
+  while (i<text.length){
+    const c=text[i];
+    if (inQ){ if (c==='"'){ if (text[i+1]==='"'){ field+='"'; i+=2; continue; } inQ=false; i++; continue; } field+=c; i++; continue; }
+    if (c==='"'){ inQ=true; i++; continue; }
+    if (c===delim){ row.push(field); field=''; i++; continue; }
+    if (c==='\r'){ i++; continue; }
+    if (c==='\n'){ row.push(field); rows.push(row); row=[]; field=''; i++; continue; }
+    field+=c; i++;
+  }
+  if (field!=='' || row.length){ row.push(field); rows.push(row); }
+  const clean = rows.filter(r=>!(r.length===1 && r[0].trim()===''));
+  if (!clean.length) return { ok:true, headers:[], rows:[], delimiter:delim, objects:[] };
+  const headers = clean[0].map(h=>h.trim());
+  const body = clean.slice(1);
+  const widthIssue = body.findIndex(r=>r.length!==headers.length);
+  const objects = body.map(r=>{ const o={}; headers.forEach((h,idx)=>{ o[h] = r[idx]!==undefined ? r[idx] : ''; }); return o; });
+  return { ok:true, headers, rows:body, objects, delimiter:delim, warning: widthIssue>=0 ? `Row ${widthIssue+2} has a different column count than the header.` : null };
+}
+function stripComment(s){
+  let inQ=null;
+  for (let i=0;i<s.length;i++){
+    const c=s[i];
+    if (inQ){ if (c===inQ){ if (inQ==="'" && s[i+1]==="'"){ i++; continue; } inQ=null; } else if (inQ==='"' && c==='\\') i++; continue; }
+    if (c==='"'||c==="'"){ inQ=c; continue; }
+    if (c==='#' && (i===0 || /\s/.test(s[i-1]))) return s.slice(0,i).trim();
+  }
+  return s.trim();
+}
+function parseFlow(s){
+  let i=0;
+  const ws = ()=>{ while (i<s.length && /\s/.test(s[i])) i++; };
+  function val(){
+    ws(); const c=s[i];
+    if (c==='['){ i++; const arr=[]; ws(); if (s[i]===']'){ i++; return arr; }
+      while (true){ arr.push(val()); ws(); if (s[i]===','){ i++; continue; } if (s[i]===']'){ i++; break; } throw new Error('Invalid flow array'); } return arr; }
+    if (c==='{'){ i++; const obj={}; ws(); if (s[i]==='}'){ i++; return obj; }
+      while (true){ ws(); let k; if (s[i]==='"'||s[i]==="'") k=String(val());
+        else { let j=i; while (j<s.length && s[j]!==':') j++; k=s.slice(i,j).trim(); i=j; }
+        ws(); if (s[i]!==':') throw new Error('Invalid flow map'); i++;
+        obj[k]=val(); ws(); if (s[i]===','){ i++; continue; } if (s[i]==='}'){ i++; break; } throw new Error('Invalid flow map'); } return obj; }
+    if (c==='"'||c==="'"){ const q=c; let j=i+1, out='';
+      while (j<s.length){ if (q==='"' && s[j]==='\\'){ out+=s[j]+s[j+1]; j+=2; continue; }
+        if (s[j]===q){ if (q==="'" && s[j+1]==="'"){ out+="'"; j+=2; continue; } break; } out+=s[j]; j++; }
+      i=j+1; if (q==='"'){ try{ return JSON.parse('"'+out+'"'); }catch(e){ return out; } } return out; }
+    let j=i; while (j<s.length && !/[,\]}]/.test(s[j])) j++;
+    const raw=s.slice(i,j).trim(); i=j; return yamlScalarParse(raw);
+  }
+  return val();
+}
+function yamlScalarParse(v){
+  v=String(v).trim();
+  if (v===''||v==='~'||v==='null'||v==='Null'||v==='NULL') return null;
+  if (/^(true|True|TRUE|yes|Yes|on|On)$/.test(v)) return true;
+  if (/^(false|False|FALSE|no|No|off|Off)$/.test(v)) return false;
+  if (/^-?\d+$/.test(v)) return parseInt(v,10);
+  if (/^-?(\d+\.\d*|\.\d+|\d+)([eE][-+]?\d+)?$/.test(v) && /[.eE]/.test(v)) return parseFloat(v);
+  if (v[0]==='"'){ try{ return JSON.parse(v); }catch(e){ return v.slice(1,-1); } }
+  if (v[0]==="'") return v.slice(1,-1).replace(/''/g,"'");
+  if (v[0]==='['||v[0]==='{'){ try{ return parseFlow(v); }catch(e){ return v; } }
+  return v;
+}
+function splitKey(s){
+  let inQ=null;
+  for (let i=0;i<s.length;i++){
+    const c=s[i];
+    if (inQ){ if (c===inQ){ if (inQ==="'" && s[i+1]==="'"){ i++; continue; } inQ=null; } else if (inQ==='"' && c==='\\') i++; continue; }
+    if (c==='"'||c==="'"){ inQ=c; continue; }
+    if (c===':' && (i+1>=s.length || s[i+1]===' ')){
+      let key=s.slice(0,i).trim();
+      if ((key[0]==='"' && key.endsWith('"')) || (key[0]==="'" && key.endsWith("'"))) key=key.slice(1,-1);
+      return { key, rest: stripComment(s.slice(i+1)) };
+    }
+  }
+  return null;
+}
+function parseYAMLChunk(lines){
+  let li=0;
+  function peek(){
+    while (li<lines.length){ const raw=lines[li]; const t=raw.trim();
+      if (t===''||t.startsWith('#')){ li++; continue; }
+      const indent=raw.length-raw.replace(/^\s+/,'').length;
+      return { indent, content:raw.slice(indent), raw }; }
+    return null;
+  }
+  function parseBlock(minIndent){
+    const p=peek(); if (!p||p.indent<minIndent) return null;
+    if (p.content==='-'||p.content.startsWith('- ')) return parseSeq(p.indent);
+    if (splitKey(p.content)) return parseMap(p.indent);
+    li++; return yamlScalarParse(stripComment(p.content));
+  }
+  function parseSeq(indent){
+    const arr=[];
+    while (true){ const p=peek(); if (!p||p.indent<indent) break;
+      if (p.indent>indent) throw new Error(`Unexpected indentation at line ${li+1}`);
+      if (!(p.content==='-'||p.content.startsWith('- '))) break;
+      const rest=stripComment(p.content.slice(1)); li++;
+      if (rest===''){ const v=parseBlock(indent+1); arr.push(v===null?null:v); }
+      else if (splitKey(rest)){ lines[li-1]=' '.repeat(indent+2)+rest; li--; arr.push(parseBlock(indent+2)); }
+      else arr.push(yamlScalarParse(rest));
+    }
+    return arr;
+  }
+  function parseMap(indent){
+    const obj={};
+    while (true){ const p=peek(); if (!p||p.indent<indent) break;
+      if (p.indent>indent) throw new Error(`Unexpected indentation at line ${li+1}`);
+      const kv=splitKey(p.content); if (!kv) break; li++;
+      const key=kv.key, rest=kv.rest;
+      if (rest===''){ const p2=peek();
+        if (p2 && p2.indent>=indent && (p2.content==='-'||p2.content.startsWith('- '))) obj[key]=parseSeq(p2.indent);
+        else { const v=parseBlock(indent+1); obj[key]=v===null?null:v; }
+      } else if (/^[|>][+-]?$/.test(rest)){ obj[key]=readBlockScalar(indent, rest[0]); }
+      else obj[key]=yamlScalarParse(rest);
+    }
+    return obj;
+  }
+  function readBlockScalar(indent, style){
+    const out=[]; let blockIndent=null;
+    while (li<lines.length){ const raw=lines[li];
+      if (raw.trim()===''){ out.push(''); li++; continue; }
+      const ind=raw.length-raw.replace(/^\s+/,'').length;
+      if (ind<=indent) break;
+      if (blockIndent===null) blockIndent=ind;
+      out.push(raw.slice(blockIndent)); li++;
+    }
+    while (out.length && out[out.length-1]==='') out.pop();
+    return style==='>' ? out.join(' ').trim() : out.join('\n');
+  }
+  const r=parseBlock(0); return r===null?null:r;
+}
+function parseYAML(text){
+  const rawLines = text.replace(/\r\n?/g,'\n').split('\n');
+  const chunks=[]; let cur=[];
+  for (const l of rawLines){ if (/^---(\s+#.*)?\s*$/.test(l)||/^\.\.\.\s*$/.test(l)){ chunks.push(cur); cur=[]; } else cur.push(l); }
+  chunks.push(cur);
+  const docs=[];
+  try { for (const c of chunks){ if (c.every(l=>l.trim()===''||l.trim().startsWith('#'))) continue; docs.push(parseYAMLChunk(c)); } return { ok:true, docs }; }
+  catch(e){ return { ok:false, error:e.message, docs }; }
+}
+function yamlNeedsQuote(s){
+  if (s==='') return true;
+  if (/^[\s]|[\s]$/.test(s)) return true;
+  if (/[\n\r\t]/.test(s)) return true;
+  if (/^[-?:,\[\]{}#&*!|>'"%@`]/.test(s)) return true;
+  if (/:\s/.test(s)||/:\s*$/.test(s)) return true;
+  if (/\s#/.test(s)) return true;
+  if (/^(true|false|null|~|yes|no|on|off)$/i.test(s)) return true;
+  if (/^-?\d+(\.\d+)?([eE][-+]?\d+)?$/.test(s)) return true;
+  return false;
+}
+function yamlScalarOut(v){
+  if (v===null||v===undefined) return 'null';
+  if (typeof v==='boolean') return v?'true':'false';
+  if (typeof v==='number') return Number.isFinite(v)?String(v):'null';
+  const s=String(v); return yamlNeedsQuote(s)?JSON.stringify(s):s;
+}
+function toYAML(v, ind=0){
+  const pad='  '.repeat(ind);
+  if (Array.isArray(v)){
+    if (!v.length) return pad+'[]';
+    return v.map(item=>{
+      if (item!==null && typeof item==='object'){
+        const inner=toYAML(item, ind+1); const lines=inner.split('\n');
+        const first=lines[0].trimStart(); const rest=lines.slice(1);
+        return pad+'- '+first+(rest.length?'\n'+rest.join('\n'):'');
+      }
+      return pad+'- '+yamlScalarOut(item);
+    }).join('\n');
+  }
+  if (v!==null && typeof v==='object'){
+    const keys=Object.keys(v); if (!keys.length) return pad+'{}';
+    return keys.map(k=>{ const val=v[k]; const key=yamlNeedsQuote(k)?JSON.stringify(k):k;
+      if (val!==null && typeof val==='object'){
+        if (Array.isArray(val) && !val.length) return pad+key+': []';
+        if (!Array.isArray(val) && !Object.keys(val).length) return pad+key+': {}';
+        return pad+key+':\n'+toYAML(val, ind+1);
+      }
+      return pad+key+': '+yamlScalarOut(val);
+    }).join('\n');
+  }
+  return pad+yamlScalarOut(v);
+}
+function csvEscape(v,d){
+  if (v===null||v===undefined) return '';
+  let s = typeof v==='object' ? JSON.stringify(v) : String(v);
+  if (s.includes('"')||s.includes(d)||/[\n\r]/.test(s)) return '"'+s.replace(/"/g,'""')+'"';
+  return s;
+}
+function toCSV(headers, rows, delim=','){
+  const out=[headers.map(h=>csvEscape(h,delim)).join(delim)];
+  for (const r of rows){
+    if (Array.isArray(r)) out.push(r.map(c=>csvEscape(c,delim)).join(delim));
+    else out.push(headers.map(h=>csvEscape(r[h],delim)).join(delim));
+  }
+  return out.join('\n');
+}
+function deepMerge(a,b){
+  if (Array.isArray(a)&&Array.isArray(b)) return a.concat(b);
+  if (a&&b&&typeof a==='object'&&typeof b==='object'&&!Array.isArray(a)&&!Array.isArray(b)){
+    const out=Object.assign({},a);
+    for (const k in b) out[k] = (k in out) ? deepMerge(out[k],b[k]) : b[k];
+    return out;
+  }
+  return b;
+}
+
+/* =========================================================================
+   SYNTAX HIGHLIGHT
+   ========================================================================= */
+function highlightJSON(text){
+  const out = [];
+  const n = text.length;
+  let i = 0;
+  while (i < n){
+    const c = text[i];
+    if (c === '"'){
+      let j = i + 1;
+      while (j < n){
+        if (text[j] === '\\'){ j += 2; continue; }
+        if (text[j] === '"'){ j++; break; }
+        j++;
+      }
+      const str = text.slice(i, j);
+      let k = j;
+      while (k < n && /\s/.test(text[k])) k++;
+      const isKey = text[k] === ':';
+      out.push('<span class="tok-' + (isKey ? 'key' : 'str') + '">' + esc(str) + '</span>');
+      i = j;
+    } else if (c === '-' || (c >= '0' && c <= '9')){
+      let j = i;
+      if (text[j] === '-') j++;
+      while (j < n && /[\d.eE+\-]/.test(text[j])) j++;
+      out.push('<span class="tok-num">' + esc(text.slice(i, j)) + '</span>');
+      i = j;
+    } else if (text.startsWith('true', i)){
+      out.push('<span class="tok-bool">true</span>');
+      i += 4;
+    } else if (text.startsWith('false', i)){
+      out.push('<span class="tok-bool">false</span>');
+      i += 5;
+    } else if (text.startsWith('null', i)){
+      out.push('<span class="tok-null">null</span>');
+      i += 4;
+    } else if (c === '{' || c === '}' || c === '[' || c === ']' || c === ',' || c === ':'){
+      out.push('<span class="tok-punc">' + esc(c) + '</span>');
+      i++;
+    } else {
+      out.push(esc(c));
+      i++;
+    }
+  }
+  return out.join('');
+}
+
+/* =========================================================================
+   MARKDOWN RENDERER
+   ========================================================================= */
+function renderMarkdownHTML(md){
+  const codeBlocks = [];
+  md = md.replace(/```(\w*)\n?([\s\S]*?)```/g, (_, lang, code) => {
+    const idx = codeBlocks.length;
+    codeBlocks.push({ lang, code });
+    return '\u0000CB' + idx + '\u0000';
+  });
+  md = md.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+  md = md.replace(/`([^`\n]+)`/g,'<code>$1</code>');
+
+  const lines = md.split('\n');
+  const out = []; let i = 0;
+  while (i < lines.length){
+    const line = lines[i];
+    if (/^\s*\|.+\|\s*$/.test(line) && i+1 < lines.length && /^\s*\|[\s\-:|]+\|\s*$/.test(lines[i+1])){
+      const headers = line.trim().replace(/^\||\|$/g,'').split('|').map(s=>s.trim());
+      i += 2;
+      const rows = [];
+      while (i < lines.length && /^\s*\|.+\|\s*$/.test(lines[i])){
+        rows.push(lines[i].trim().replace(/^\||\|$/g,'').split('|').map(s=>s.trim()));
+        i++;
+      }
+      out.push('<table><thead><tr>'+headers.map(h=>`<th>${h}</th>`).join('')+'</tr></thead><tbody>'
+        + rows.map(r=>'<tr>'+r.map(c=>`<td>${c}</td>`).join('')+'</tr>').join('')+'</tbody></table>');
+      continue;
+    }
+    out.push(line); i++;
+  }
+  md = out.join('\n');
+
+  md = md.replace(/^######\s+(.+)$/gm,'<h6>$1</h6>');
+  md = md.replace(/^#####\s+(.+)$/gm,'<h5>$1</h5>');
+  md = md.replace(/^####\s+(.+)$/gm,'<h4>$1</h4>');
+  md = md.replace(/^###\s+(.+)$/gm,'<h3>$1</h3>');
+  md = md.replace(/^##\s+(.+)$/gm,'<h2>$1</h2>');
+  md = md.replace(/^#\s+(.+)$/gm,'<h1>$1</h1>');
+  md = md.replace(/^\s*([-*_])\s*(?:\1\s*){2,}$/gm,'<hr>');
+  md = md.replace(/\*\*\*(.+?)\*\*\*/g,'<strong><em>$1</em></strong>');
+  md = md.replace(/\*\*(.+?)\*\*/g,'<strong>$1</strong>');
+  md = md.replace(/(^|[^\*])\*([^\*\n]+?)\*(?!\*)/g,'$1<em>$2</em>');
+  md = md.replace(/___(.+?)___/g,'<strong><em>$1</em></strong>');
+  md = md.replace(/__(.+?)__/g,'<strong>$1</strong>');
+  md = md.replace(/~~(.+?)~~/g,'<del>$1</del>');
+  md = md.replace(/!\[([^\]]*)\]\(([^)]+)\)/g,'<img alt="$1" src="$2">');
+  md = md.replace(/\[([^\]]+)\]\(([^)]+)\)/g,'<a href="$2" target="_blank" rel="noopener">$1</a>');
+  md = md.replace(/^&gt;\s?(.+)$/gm,'<blockquote>$1</blockquote>');
+  md = md.replace(/(<\/blockquote>\n<blockquote>)+/g, '\n');
+  md = md.replace(/^\s*- \[x\]\s+(.+)$/gm,'<li class="task"><input type="checkbox" checked disabled> $1</li>');
+  md = md.replace(/^\s*- \[ \]\s+(.+)$/gm,'<li class="task"><input type="checkbox" disabled> $1</li>');
+  md = md.replace(/^\s*[-*+]\s+(.+)$/gm,'<li>$1</li>');
+  md = md.replace(/^\s*(\d+)\.\s+(.+)$/gm,'<li class="ol-item">$2</li>');
+  md = md.replace(/(?:^|\n)((?:<li[^>]*>[\s\S]*?<\/li>\n?)+)/g, (m, group) => {
+    const isOrdered = /class="ol-item"/.test(group);
+    const tag = isOrdered ? 'ol' : 'ul';
+    return '\n<' + tag + '>' + group.replace(/\s+$/,'') + '</' + tag + '>\n';
+  });
+  md = md.split('\n').map(line => {
+    if (line.trim() === '') return '';
+    if (/^\s*<(h[1-6]|ul|ol|li|table|thead|tbody|tr|th|td|blockquote|pre|hr|p|div|img|a|code|strong|em|del|input|br)/.test(line)) return line;
+    if (/^\s*\u0000CB/.test(line)) return line;
+    return '<p>' + line + '</p>';
+  }).join('\n');
+  md = md.replace(/\u0000CB(\d+)\u0000/g, (_, idx) => {
+    const b = codeBlocks[+idx];
+    const langCls = b.lang ? ' class="language-' + b.lang + '"' : '';
+    return '<pre><code' + langCls + '>' + b.code.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;') + '</code></pre>';
+  });
+  return md;
+}
+
+/* =========================================================================
+   CSV PREVIEW
+   ========================================================================= */
+function renderCSVStyled(text, delim){
+  const r = parseCSV(text, delim);
+  if (!r.ok) return '<div class="csv-preview"><div class="alert err" style="margin:14px">Invalid CSV</div></div>';
+  if (!r.headers.length) return '<div class="csv-preview"><div class="csv-empty">Empty CSV — nothing to preview</div></div>';
+  const d = r.delimiter || ',';
+  const styledDelim = '<span class="csv-comma">' + esc(d) + '</span>';
+  const widths = r.headers.map((h, i) => {
+    let w = String(h ?? '').length;
+    for (const row of r.rows){ w = Math.max(w, String(row[i] ?? '').length); }
+    return Math.min(w, 42);
+  });
+  const pad = (s, w) => { s = String(s ?? ''); if (s.length > w) return s.slice(0, w - 1) + '…'; return s + ' '.repeat(w - s.length); };
+  const lines = [];
+  lines.push('<span class="csv-header">' + r.headers.map((h, i) => esc(pad(h, widths[i]))).join(styledDelim) + '</span>');
+  for (const row of r.rows){ lines.push(row.map((c, i) => esc(pad(c, widths[i]))).join(styledDelim)); }
+  return '<div class="csv-preview"><pre class="csv-pre">' + lines.join('\n') + '</pre></div>';
+}
+
+/* =========================================================================
+   CONTENT CONVERSION
+   ========================================================================= */
+function tryParseAs(content, fmt){
+  try {
+    if (fmt==='json'){ const r=parseJSON(content); return { ok:r.ok, data:r.data, error:r.error }; }
+    if (fmt==='jsonl'){ const r=parseJSONL(content); return { ok:r.ok, data:r.records, error:r.error }; }
+    if (fmt==='csv'){ const r=parseCSV(content); return { ok:r.ok, data:r.objects, headers:r.headers, error:r.error }; }
+    if (fmt==='yaml'){ const r=parseYAML(content); return { ok:r.ok, data:r.docs.length===1?r.docs[0]:r.docs, error:r.error }; }
+    return { ok:true, data:content };
+  } catch(e){ return { ok:false, error:e.message }; }
+}
+function guessSourceFormat(content){
+  const c = (content||'').trim(); if (!c) return 'txt';
+  if ((c.startsWith('{')&&c.endsWith('}'))||(c.startsWith('[')&&c.endsWith(']'))){ try{ JSON.parse(c); return 'json'; }catch(e){} }
+  const lines = c.split('\n').filter(l=>l.trim());
+  if (lines.length>1){ let allJson=true; for (const l of lines){ try{ JSON.parse(l); }catch(e){ allJson=false; break; } } if (allJson) return 'jsonl'; }
+  if (/^[\w.-]+\s*:/m.test(c)||/^\s*-\s+/m.test(c)){ const r=parseYAML(c); if (r.ok && r.docs.length) return 'yaml'; }
+  if (lines.length>1){ const csv=parseCSV(c); if (csv.ok && csv.headers && csv.headers.length>1) return 'csv'; }
+  if (/^#{1,6}\s|\*\*|^\s*[-*]\s/m.test(c)) return 'md';
+  return 'txt';
+}
+function textToObject(text){
+  const lines = text.split('\n');
+  const trimmed = lines.filter(l=>l.trim());
+  const kvPairs = [];
+  for (const line of trimmed){ const m=/^\s*([A-Za-z_][\w.-]*)\s*[:=]\s*(.+?)\s*$/.exec(line); if (m) kvPairs.push({key:m[1], value:m[2]}); }
+  if (kvPairs.length >= Math.max(1, trimmed.length*0.6) && kvPairs.length>=2){ const obj={}; for (const p of kvPairs) obj[p.key]=p.value; return obj; }
+  return { content:text, lines:lines.slice() };
+}
+function mdToPlain(md){
+  return md.replace(/```[\s\S]*?```/g, m=>m.replace(/```[a-z]*\n?/g,'').replace(/```$/,''))
+    .replace(/^#{1,6}\s+/gm,'')
+    .replace(/\*\*\*(.+?)\*\*\*/g,'$1').replace(/\*\*(.+?)\*\*/g,'$1').replace(/\*(.+?)\*/g,'$1')
+    .replace(/___(.+?)___/g,'$1').replace(/__(.+?)__/g,'$1').replace(/_(.+?)_/g,'$1')
+    .replace(/~~(.+?)~~/g,'$1').replace(/`([^`]+)`/g,'$1')
+    .replace(/!\[([^\]]*)\]\([^)]*\)/g,'$1').replace(/\[([^\]]+)\]\([^)]*\)/g,'$1')
+    .replace(/^\s*[-*+]\s+/gm,'').replace(/^\s*\d+\.\s+/gm,'').replace(/^\s*>\s?/gm,'')
+    .replace(/^\s*\|(.+)\|\s*$/gm, m=>m.replace(/^\s*\|\s*|\s*\|\s*$/g,'').replace(/\s*\|\s*/g,' | '))
+    .replace(/^\s*[-:]+(\s*\|\s*[-:]+)+\s*$/gm,'')
+    .replace(/^-{3,}$/gm,'').replace(/\n{3,}/g,'\n\n').trim();
+}
+function mdToObject(md){
+  const lines=md.split('\n'); const result={}; let currentKey=null; let buffer=[];
+  const flush=()=>{ if (currentKey!==null){ result[currentKey]=buffer.join('\n').trim(); } buffer=[]; };
+  for (const line of lines){ const h=/^#\s+(.+)$/.exec(line); if (h){ flush(); currentKey=h[1]; } else buffer.push(line); }
+  flush();
+  if (Object.keys(result).length===0) return { content:md };
+  return result;
+}
+function mdToRecords(md){
+  const lines=md.split('\n'); const records=[]; let currentHeading=null; let buffer=[];
+  const flush=()=>{ if (currentHeading!==null) records.push({heading:currentHeading, content:buffer.join('\n').trim()}); buffer=[]; };
+  for (const line of lines){ const h=/^(#{1,6})\s+(.+)$/.exec(line); if (h){ flush(); currentHeading=h[2]; } else buffer.push(line); }
+  flush();
+  if (!records.length && md.trim()) records.push({content:md.trim()});
+  return records;
+}
+function dataToMarkdown(data){
+  if (data===null||data===undefined) return 'null';
+  if (typeof data==='string') return data;
+  if (typeof data==='number'||typeof data==='boolean') return String(data);
+  if (Array.isArray(data)){
+    return data.map(item=>{
+      if (item && typeof item==='object' && !Array.isArray(item)) return '```json\n'+JSON.stringify(item,null,2)+'\n```';
+      return '- '+(item===null?'null':String(item));
+    }).join('\n\n');
+  }
+  if (typeof data==='object'){
+    return Object.keys(data).map(k=>{
+      const v=data[k]; const heading='## '+k;
+      if (v===null||v===undefined) return heading+'\n\nnull';
+      if (typeof v==='object') return heading+'\n\n```json\n'+JSON.stringify(v,null,2)+'\n```';
+      return heading+'\n\n'+String(v);
+    }).join('\n\n');
+  }
+  return String(data);
+}
+function recordsToMarkdown(records){
+  if (!records||!records.length) return '';
+  const keys=[]; for (const r of records) for (const k of Object.keys(r)) if (!keys.includes(k)) keys.push(k);
+  const cell = v => { if (v===null||v===undefined) return ''; if (typeof v==='object') return JSON.stringify(v); return String(v); };
+  let md='| '+keys.join(' | ')+' |\n| '+keys.map(()=>'---').join(' | ')+' |\n';
+  for (const r of records) md += '| '+keys.map(k=>cell(r[k]).replace(/\|/g,'\\|').replace(/\n/g,' ')).join(' | ')+' |\n';
+  return md;
+}
+function renderAs(inter, to){
+  if (to==='txt'){
+    if (inter.kind==='text') return { ok:true, content:inter.value };
+    if (inter.kind==='markdown') return { ok:true, content:mdToPlain(inter.value) };
+    if (inter.kind==='data') return { ok:true, content: typeof inter.value==='string'?inter.value:JSON.stringify(inter.value,null,2) };
+    if (inter.kind==='records') return { ok:true, content: inter.value.map(r=>JSON.stringify(r)).join('\n') };
+  }
+  if (to==='md'){
+    if (inter.kind==='text'){
+      const lines=inter.value.split('\n');
+      if (lines.length && !/^#/.test(lines[0].trim()) && lines[0].trim()) return { ok:true, content:'# '+lines[0].trim()+'\n\n'+lines.slice(1).join('\n').trim() };
+      return { ok:true, content:inter.value };
+    }
+    if (inter.kind==='markdown') return { ok:true, content:inter.value };
+    if (inter.kind==='records') return { ok:true, content: recordsToMarkdown(inter.value) };
+    if (inter.kind==='data') return { ok:true, content: dataToMarkdown(inter.value) };
+  }
+  if (to==='json'){
+    let val;
+    if (inter.kind==='data') val=inter.value;
+    else if (inter.kind==='records') val={ records:inter.value };
+    else if (inter.kind==='markdown') val=mdToObject(inter.value);
+    else val=textToObject(inter.value);
+    return { ok:true, content: JSON.stringify(val,null,2) };
+  }
+  if (to==='jsonl'){
+    let records;
+    if (inter.kind==='records') records=inter.value;
+    else if (inter.kind==='data') records = Array.isArray(inter.value)?inter.value:[inter.value];
+    else if (inter.kind==='text') records=inter.value.split('\n').map(l=>({text:l}));
+    else records=mdToRecords(inter.value);
+    records = records.map(r=>(r&&typeof r==='object'&&!Array.isArray(r))?r:{value:r});
+    return { ok:true, content: records.map(r=>JSON.stringify(r)).join('\n') };
+  }
+  if (to==='csv'){
+    let rows=[];
+    if (inter.kind==='records') rows=inter.value.map(r=>(r&&typeof r==='object'&&!Array.isArray(r))?r:{value:r});
+    else if (inter.kind==='data'){ const v=inter.value;
+      if (Array.isArray(v)) rows=v.map(x=>(x&&typeof x==='object'&&!Array.isArray(x))?x:{value:x});
+      else if (v&&typeof v==='object') rows=[v]; else rows=[{value:v}];
+    } else if (inter.kind==='text') rows=inter.value.split('\n').map(l=>({text:l}));
+    else rows=mdToRecords(inter.value);
+    const allKeys=[]; for (const r of rows) for (const k of Object.keys(r)) if (!allKeys.includes(k)) allKeys.push(k);
+    if (!allKeys.length) allKeys.push('value');
+    return { ok:true, content: toCSV(allKeys, rows, ',') };
+  }
+  if (to==='yaml'){
+    let val;
+    if (inter.kind==='data') val=inter.value;
+    else if (inter.kind==='records') val=inter.value;
+    else if (inter.kind==='markdown') val=mdToObject(inter.value);
+    else val=textToObject(inter.value);
+    return { ok:true, content: toYAML(val,0) };
+  }
+  return { ok:false, error:'Unsupported conversion' };
+}
+function convertContent(content, from, to){
+  if (from===to) return { ok:false, error:'Source and target formats are the same.' };
+  const parse = tryParseAs(content, from);
+  if (!parse.ok) return { ok:false, error:`Cannot parse source as ${fmtLabel(from)}: ${parse.error}` };
+  let inter;
+  if (from==='json') inter={kind:'data', value:parse.data};
+  else if (from==='jsonl') inter={kind:'records', value:parse.data};
+  else if (from==='csv') inter={kind:'records', value:parse.data, headers:parse.headers};
+  else if (from==='yaml') inter={kind:'data', value:parse.data};
+  else if (from==='md') inter={kind:'markdown', value:content};
+  else inter={kind:'text', value:content};
+  return renderAs(inter, to);
+}
+
+/* =========================================================================
+   STATE
+   ========================================================================= */
+const state = {
+  files: [], categories: [], activeId: null,
+  checked: new Set(), search: '', filterFormat: 'all',
+  theme: 'dark', viewMode: 'raw', wrap: false,
+  mergeCount: 0, editingFileId: null, guideTab: null,
+  history: { undo: [], redo: [] }
+};
+function activeFile(){ return state.files.find(f => f.id === state.activeId) || null; }
+function fileById(id){ return state.files.find(f => f.id === id) || null; }
+function isDirty(f){ return !!(f && f.content !== f.baseline); }
+
+/* =========================================================================
+   SAVE / PERSISTENCE (v7 — single-key, race-proof)
+   -------------------------------------------------------------------------
+   Design:
+   - The authoritative snapshot lives at ONE localStorage key and ONE IDB
+     record. Every write overwrites both.
+   - localStorage is written SYNCHRONOUSLY at the moment of persistence, so
+     a refresh always sees the newest state — deleted files cannot resurrect.
+   - IDB writes go through a serialized queue; only the latest pending
+     payload is written, so out-of-order completion can never clobber.
+   - On boot, localStorage wins over IDB (it's always fresher).
+   ========================================================================= */
+function setSaveStatus(status, extra){
+  const el = $('#saveStatus'); if (!el) return;
+  el.classList.remove('dirty', 'saving', 'error');
+  const txt = $('#saveStatusText'); if (!txt) return;
+  if (status === 'dirty'){
+    el.classList.add('dirty');
+    txt.innerHTML = 'Autosave pending <span class="info-i" aria-hidden="true">i</span>';
+  } else if (status === 'saving'){
+    el.classList.add('saving'); txt.textContent = 'Saving…';
+  } else if (status === 'error'){
+    el.classList.add('error'); txt.textContent = 'Save failed';
+  } else if (status === 'saved'){
+    txt.textContent = extra || ('Saved ' + new Date().toLocaleTimeString([], {hour:'2-digit',minute:'2-digit',second:'2-digit'}));
+  } else {
+    txt.textContent = 'Autosave';
+  }
+}
+function updateEditorPill(){
+  const pane = $('#editorPane');
+  if (!pane) return;
+  const pill = pane.querySelector('#dirtyPill');
+  if (!pill) return;
+  const f = activeFile();
+  if (!f) return;
+  if (isDirty(f)){
+    pill.className = 'status-pill s-modified save-hint';
+    pill.setAttribute('role', 'button');
+    pill.setAttribute('tabindex', '0');
+    pill.setAttribute('aria-label', 'How saving works');
+    pill.setAttribute('title', 'Click to learn how saving works');
+    pill.innerHTML = 'Autosave pending <span class="info-i" aria-hidden="true">i</span>';
+  } else {
+    pill.className = 'status-pill s-saved';
+    pill.removeAttribute('role');
+    pill.removeAttribute('tabindex');
+    pill.removeAttribute('aria-label');
+    pill.removeAttribute('title');
+    pill.textContent = 'Saved';
+  }
+}
+const debouncedSidebarRefresh = debounce(() => { renderSidebar(); updateStatusbar(); }, 300);
+
+const STORAGE = Object.freeze({
+  DB_NAME: 'mftvc-workspace-v7',
+  DB_VERSION: 1,
+  STORE: 'workspace',
+  RECORD_KEY: 'payload',
+  SCHEMA: 7,
+  LOCAL_KEY: 'mftvc_workspace_v7_payload',
+  LEGACY_DB_NAMES: ['mftvc-workspace-v6', 'mftvc-workspace-v5', 'mftvc-workspace-v4', 'mftvc-workspace'],
+  LEGACY_LOCAL_PREFIXES: ['mftvc_session_v6_', 'mftvc_active_session_v6', 'mftvc_workspace_v6', 'mftvc_session_', 'mftvc_workspace_v5', 'mftvc_workspace_v4', 'mftvc_storage_']
+});
+
+let storageDb = null;
+let storageChain = Promise.resolve();
+let persistRev = 0;
+let saveTimer = null;
+let saveResolvers = [];
+
+function safeLocalSet(k, v){ try { localStorage.setItem(k, v); return true; } catch(e){ return false; } }
+function safeLocalGet(k){ try { return localStorage.getItem(k); } catch(e){ return null; } }
+function safeLocalRemove(k){ try { localStorage.removeItem(k); } catch(e){} }
+function safeLocalKeys(){ try { return Object.keys(localStorage); } catch(e){ return []; } }
+
+const StorageDB = {
+  async open(){
+    if (storageDb) return storageDb;
+    if (!window.indexedDB) throw new Error('IndexedDB unavailable');
+    return new Promise((resolve, reject) => {
+      const req = indexedDB.open(STORAGE.DB_NAME, STORAGE.DB_VERSION);
+      req.onupgradeneeded = e => {
+        const db = e.target.result;
+        if (!db.objectStoreNames.contains(STORAGE.STORE)) db.createObjectStore(STORAGE.STORE);
+      };
+      req.onsuccess = e => {
+        storageDb = e.target.result;
+        storageDb.onversionchange = () => { try { storageDb.close(); } catch(err){} storageDb = null; };
+        resolve(storageDb);
+      };
+      req.onerror = () => reject(req.error || new Error('IndexedDB open failed'));
+      req.onblocked = () => reject(new Error('IndexedDB open blocked'));
+    });
+  },
+  async get(){
+    const db = await this.open();
+    return new Promise((resolve, reject) => {
+      const tx = db.transaction(STORAGE.STORE, 'readonly');
+      const req = tx.objectStore(STORAGE.STORE).get(STORAGE.RECORD_KEY);
+      req.onsuccess = () => resolve(req.result);
+      req.onerror = () => reject(req.error || new Error('IndexedDB read failed'));
+    });
+  },
+  async put(payload){
+    const db = await this.open();
+    return new Promise((resolve, reject) => {
+      const tx = db.transaction(STORAGE.STORE, 'readwrite');
+      tx.objectStore(STORAGE.STORE).put(payload, STORAGE.RECORD_KEY);
+      tx.oncomplete = () => resolve(true);
+      tx.onerror = () => reject(tx.error || new Error('IndexedDB write failed'));
+      tx.onabort = () => reject(tx.error || new Error('IndexedDB write aborted'));
+    });
+  },
+  async clear(){
+    const db = await this.open();
+    return new Promise((resolve, reject) => {
+      const tx = db.transaction(STORAGE.STORE, 'readwrite');
+      tx.objectStore(STORAGE.STORE).clear();
+      tx.oncomplete = () => resolve(true);
+      tx.onerror = () => reject(tx.error || new Error('IndexedDB clear failed'));
+      tx.onabort = () => reject(tx.error || new Error('IndexedDB clear aborted'));
+    });
+  }
+};
+
+function cancelPendingSaveRequests(){
+  if (saveTimer){ clearTimeout(saveTimer); saveTimer = null; }
+  const resolvers = saveResolvers;
+  saveResolvers = [];
+  resolvers.forEach(r => r.resolve(false));
+}
+function enqueueStorage(task){
+  const run = storageChain.then(task, task);
+  storageChain = run.catch(() => {});
+  return run;
+}
+function serializeWorkspace(){
+  return {
+    schemaVersion: STORAGE.SCHEMA,
+    revision: Date.now(),
+    files: state.files.map(f => ({
+      id: f.id, name: f.name, format: f.format, content: f.content,
+      baseline: f.baseline, categoryId: f.categoryId || null,
+      createdAt: f.createdAt || Date.now()
+    })),
+    categories: state.categories.map(c => ({ id: c.id, name: c.name })),
+    activeId: state.activeId && state.files.some(f => f.id === state.activeId) ? state.activeId : null,
+    checked: Array.from(state.checked).filter(id => state.files.some(f => f.id === id)),
+    theme: state.theme === 'light' ? 'light' : 'dark',
+    mergeCount: Number(state.mergeCount) || 0,
+    savedAt: Date.now()
+  };
+}
+function isValidWorkspacePayload(p){
+  return !!(p && typeof p === 'object' && Array.isArray(p.files));
+}
+
+/**
+ * Persist a payload.
+ * - Synchronously writes localStorage (authoritative on boot).
+ * - Asynchronously writes IDB via serialized queue; stale writes are skipped.
+ */
+function persistPayload(p){
+  persistRev++;
+  const myRev = persistRev;
+  const localOk = safeLocalSet(STORAGE.LOCAL_KEY, JSON.stringify(p));
+  return enqueueStorage(async () => {
+    if (myRev !== persistRev) return localOk;  // a newer payload is pending
+    let idbOk = false;
+    try { await StorageDB.put(p); idbOk = true; } catch(e){}
+    return localOk || idbOk;
+  });
+}
+
+/** Debounced autosave — collects rapid edits into one write. */
+function persist(){
+  return new Promise(resolve => {
+    saveResolvers.push({resolve});
+    if (saveTimer) clearTimeout(saveTimer);
+    saveTimer = setTimeout(() => {
+      saveTimer = null;
+      const pending = saveResolvers;
+      saveResolvers = [];
+      persistPayload(serializeWorkspace())
+        .then(ok => pending.forEach(r => r.resolve(ok)))
+        .catch(() => pending.forEach(r => r.resolve(false)));
+    }, 250);
+  });
+}
+/** Immediate save — used by destructive operations and Ctrl+S. */
+async function persistNow(){
+  cancelPendingSaveRequests();
+  return persistPayload(serializeWorkspace());
+}
+const persistMeta = () => persist().catch(() => {});
+function scheduleSessionSave(){ return persist(); }
+
+function cleanupLegacyLocalStorage(){
+  for (const key of safeLocalKeys()){
+    if (key === STORAGE.LOCAL_KEY) continue;
+    if (STORAGE.LEGACY_LOCAL_PREFIXES.some(prefix => key.startsWith(prefix))) safeLocalRemove(key);
+  }
+}
+async function retireLegacyDatabases(){
+  if (!window.indexedDB) return;
+  for (const name of STORAGE.LEGACY_DB_NAMES){
+    try{
+      await new Promise(resolve => {
+        const req = indexedDB.deleteDatabase(name);
+        req.onsuccess = req.onerror = req.onblocked = () => resolve();
+      });
+    }catch(e){}
+  }
+}
+
+async function restoreWorkspace(){
+  cleanupLegacyLocalStorage();
+  await retireLegacyDatabases();
+
+  // localStorage is always the freshest (written synchronously on every change).
+  let payload = null;
+  try {
+    const raw = safeLocalGet(STORAGE.LOCAL_KEY);
+    if (raw){
+      const p = JSON.parse(raw);
+      if (isValidWorkspacePayload(p)) payload = p;
+    }
+  } catch(e){}
+
+  // Fall back to IDB.
+  if (!payload){
+    try { payload = await StorageDB.get(); } catch(e){}
+    if (!isValidWorkspacePayload(payload)) payload = null;
+  }
+
+  if (!payload){
+    state.files = [];
+    state.categories = [];
+    state.activeId = null;
+    state.checked = new Set();
+    state.mergeCount = 0;
+    persistPayload(serializeWorkspace());
+    return false;
+  }
+
+  state.files = payload.files.map(f => ({
+    id: f.id || uid(), name: f.name || 'untitled.txt', format: f.format || 'txt',
+    content: typeof f.content === 'string' ? f.content : '',
+    baseline: f.baseline !== undefined ? f.baseline : (typeof f.content === 'string' ? f.content : ''),
+    categoryId: f.categoryId || null, createdAt: f.createdAt || Date.now()
+  }));
+  state.categories = Array.isArray(payload.categories) ? payload.categories : [];
+  state.activeId = payload.activeId && state.files.some(f => f.id === payload.activeId) ? payload.activeId : (state.files[0] ? state.files[0].id : null);
+  state.checked = new Set((payload.checked || []).filter(id => state.files.some(f => f.id === id)));
+  state.theme = payload.theme === 'light' ? 'light' : 'dark';
+  state.mergeCount = Number(payload.mergeCount) || 0;
+
+  // Normalize storage in canonical form.
+  persistPayload(serializeWorkspace());
+  return true;
+}
+
+/* =========================================================================
+   UNDO / REDO
+   ========================================================================= */
+function snapshot(){
+  state.history.undo.push(JSON.stringify({ files: state.files, categories: state.categories }));
+  if (state.history.undo.length > 40) state.history.undo.shift();
+  state.history.redo.length = 0;
+  updateToolbarState();
+}
+const snapshotDebounced = debounce(() => snapshot(), 900);
+function clearHistory(){
+  snapshotDebounced.cancel();
+  state.history.undo.length = 0;
+  state.history.redo.length = 0;
+  updateToolbarState();
+}
+function doUndo(){
+  if (!state.history.undo.length) return;
+  const raw = state.history.undo.pop();
+  const p = JSON.parse(raw);
+  state.history.redo.push(JSON.stringify({ files: state.files, categories: state.categories }));
+  state.files = p.files.map(f => ({...f}));
+  state.categories = p.categories;
+  if (!state.files.some(f => f.id === state.activeId)) state.activeId = state.files[0] ? state.files[0].id : null;
+  state.checked = new Set(Array.from(state.checked).filter(id => state.files.some(f => f.id === id)));
+  render(); persistNow(); toast('Undo', '');
+}
+function doRedo(){
+  if (!state.history.redo.length) return;
+  const raw = state.history.redo.pop();
+  const p = JSON.parse(raw);
+  state.history.undo.push(JSON.stringify({ files: state.files, categories: state.categories }));
+  state.files = p.files.map(f => ({...f}));
+  state.categories = p.categories;
+  if (!state.files.some(f => f.id === state.activeId)) state.activeId = state.files[0] ? state.files[0].id : null;
+  state.checked = new Set(Array.from(state.checked).filter(id => state.files.some(f => f.id === id)));
+  render(); persistNow(); toast('Redo', '');
+}
+
+/* =========================================================================
+   FILE OPS
+   ========================================================================= */
+function addFile(name, content, format, categoryId){
+  format = format || detectFormat(name, content);
+  const f = { id:uid(), name, format, content:content||'', baseline:content||'', categoryId:categoryId||null, createdAt:Date.now() };
+  state.files.push(f);
+  return f;
+}
+function uniqueName(name){
+  if (!state.files.some(f => f.name===name)) return name;
+  const ext = extOf(name);
+  const base = ext ? name.slice(0, -(ext.length+1)) : name;
+  let i = 2;
+  while (state.files.some(f => f.name===`${base}-${i}${ext?'.'+ext:''}`)) i++;
+  return `${base}-${i}${ext?'.'+ext:''}`;
+}
+async function importFiles(fileList){
+  let n=0, skipped=0;
+  const rejected=[];
+  const beforeCount = state.files.length;
+  for (const item of fileList){
+    const file = item.file || item;
+    if (!file || typeof file.text !== 'function'){ skipped++; continue; }
+    if (!isExtensionAllowed(file.name)){ rejected.push(file.name); continue; }
+    try{
+      const content = await file.text();
+      addFile(uniqueName(file.name), content, detectFormat(file.name, content));
+      n++;
+    }catch(e){ toast('Failed to read ' + file.name, 'err'); }
+  }
+  if (n){
+    if (!state.activeId) state.activeId = state.files[Math.max(0, beforeCount)].id;
+    clearHistory();
+    render();
+    const saved = await persistNow();
+    if (!saved) toast('Import completed but persistence failed', 'err', 4000);
+  }
+  const parts=[];
+  if (n) parts.push(`${n} imported`);
+  if (rejected.length) parts.push(`${rejected.length} rejected`);
+  if (skipped) parts.push(`${skipped} skipped`);
+  if (parts.length) toast(parts.join(' · '), rejected.length ? 'warn' : 'ok', 3200); else toast('No files were imported', 'warn');
+  if (rejected.length) showRejectedFiles(rejected);
+}
+
+/* =========================================================================
+   SAMPLE FILES
+   ========================================================================= */
+function loadSampleFiles(){
+  snapshot();
+  const samples = [
+    { name:'Skill-01.md', format:'md', content:
+`# Skill 01 — Color Theory
+
+This is an example **Markdown** file.
+Double-click the file name in the sidebar to rename it.
+Hover a row for ⧉ duplicate or ✕ remove.
+
+## Bold & Italic
+
+**Bold text**, *italic text*, and \`inline code\`.
+
+## List
+
+- First bullet
+- Second bullet
+- Third bullet
+
+## Table
+
+| Hue | Hex |
+|-----|-----|
+| Red | #f00 |
+| Blue | #00f |
+
+> A quoted tip.
+`},
+    { name:'Skill-02.md', format:'md', content:
+`# Skill 02 — Typography
+
+Second file for merge demonstration.
+
+1. Ordered one
+2. Ordered two
+3. Ordered three
+`},
+    { name:'data.json', format:'json', content:
+`{
+  "name": "Example",
+  "version": 2,
+  "active": true,
+  "tags": ["alpha", "beta"],
+  "nested": { "count": 42, "empty": null }
+}`},
+    { name:'records.jsonl', format:'jsonl', content:
+`{"id": 1, "name": "Ana", "age": 30}
+{"id": 2, "name": "Budi", "age": 25}
+{"id": 3, "name": "Citra", "age": 28}`},
+    { name:'table.csv', format:'csv', content:
+`name,age,city
+Ana,30,Jakarta
+Budi,25,Bandung
+Citra,28,Surabaya`}
+  ];
+  const before = state.files.length;
+  for (const s of samples) addFile(uniqueName(s.name), s.content, s.format, null);
+  if (!state.activeId && state.files.length) state.activeId = state.files[before] ? state.files[before].id : state.files[0].id;
+  render();
+  persistNow();
+  toast('Sample files added', 'ok');
+}
+
+/* =========================================================================
+   SIDEBAR
+   ========================================================================= */
+function renderFormatChips(){
+  const used = new Set(state.files.map(f=>f.format));
+  const chips = [`<button class="chip ${state.filterFormat==='all'?'active':''}" data-fmt="all" role="tab" aria-selected="${state.filterFormat==='all'}">All (${state.files.length})</button>`];
+  for (const k of Object.keys(FORMATS)){
+    if (!used.has(k)) continue;
+    const c = state.files.filter(f=>f.format===k).length;
+    chips.push(`<button class="chip ${state.filterFormat===k?'active':''}" data-fmt="${k}" role="tab" aria-selected="${state.filterFormat===k}">${FORMATS[k].label} (${c})</button>`);
+  }
+  $('#formatChips').innerHTML = chips.join('');
+}
+function renderSidebar(){
+  if (state.editingFileId) return;
+  renderFormatChips();
+  const q = state.search.trim().toLowerCase();
+  const ff = state.filterFormat;
+  const match = f => (!q || f.name.toLowerCase().includes(q)) && (ff==='all' || f.format===ff);
+  const container = $('#fileList');
+  const parts = [];
+  const sections = state.categories.map(c=>({ id:c.id, name:c.name, files: state.files.filter(f=>f.categoryId===c.id && match(f)) }));
+  const uncat = state.files.filter(f=>!f.categoryId && match(f));
+
+  const renderFile = f => {
+    const dirty = isDirty(f);
+    return `<div class="file-row ${f.id===state.activeId?'active':''}" data-id="${f.id}" draggable="true" tabindex="0" role="listitem" aria-label="File ${esc(f.name)}, format ${fmtLabel(f.format)}, ${dirty?'unsaved':'saved'}">
+      <input type="checkbox" class="chk" data-act="check" data-id="${f.id}" ${state.checked.has(f.id)?'checked':''} aria-label="Select ${esc(f.name)}">
+      <span class="badge ${fmtCls(f.format)}" aria-hidden="true">${fmtLabel(f.format)}</span>
+      <div class="file-meta">
+        <div class="file-name" title="Double-click to rename — ${esc(f.name)}">${esc(f.name)}</div>
+        <div class="file-sub">${fmtBytes(new Blob([f.content]).size)} · ${countLines(f.content)} lines</div>
+      </div>
+      <span class="dot ${dirty?'mod':'saved'}" title="${dirty?'Unsaved changes':'Saved'}" aria-hidden="true"></span>
+      <div class="row-actions">
+        <button class="row-btn dup" data-act="duplicate" data-id="${f.id}" title="Duplicate this file" aria-label="Duplicate ${esc(f.name)}">⧉</button>
+        <button class="row-btn del" data-act="remove" data-id="${f.id}" title="Remove from workspace" aria-label="Remove ${esc(f.name)} from workspace">✕</button>
+      </div>
+    </div>`;
+  };
+
+  for (const sec of sections){
+    parts.push(`<div class="cat" data-cat="${sec.id}">
+      <div class="cat-head" data-cat="${sec.id}" draggable="true">
+        <span class="cname">▸ ${esc(sec.name)}</span>
+        <span class="ccount">${sec.files.length}</span>
+        <button data-act="renameCat" data-cat="${sec.id}" title="Rename category" aria-label="Rename category ${esc(sec.name)}">✎</button>
+        <button data-act="delCat" data-cat="${sec.id}" title="Delete category" aria-label="Delete category ${esc(sec.name)}">✕</button>
+      </div>
+      <div class="cat-files">${sec.files.map(renderFile).join('')}</div>
+    </div>`);
+  }
+  parts.push(`<div class="cat" data-cat="">
+    <div class="cat-head" data-cat="" draggable="false">
+      <span class="cname">▸ Uncategorized</span>
+      <span class="ccount">${uncat.length}</span>
+    </div>
+    <div class="cat-files">${uncat.map(renderFile).join('')}</div>
+  </div>`);
+
+  if (!state.files.length){
+    container.innerHTML = `<div class="empty-note">
+      No files yet.<br><br>
+      Click <b>✨ Start with Sample</b>, <b>Import Files</b>,<br>or drag files here.<br><br>
+      Supported: TXT · MD · JSON · JSONL · CSV · YAML<br>
+      <span style="font-size:10.5px;color:var(--fg3)">Other formats are rejected on import.</span><br><br>
+      <span style="font-size:10.5px">Double-click a file name to rename.<br>Hover a row for ⧉ duplicate / ✕ remove.</span>
+    </div>`;
+    updateSelectionCounts();
+    return;
+  }
+  container.innerHTML = parts.join('');
+  updateSelectionCounts();
+}
+function updateSelectionCounts(){
+  const el = $('#rmSelCount');
+  if (el) el.textContent = state.checked.size ? '(' + state.checked.size + ')' : '';
+  const btnSel = $('#btnRemoveSelected');
+  if (btnSel) btnSel.disabled = state.checked.size === 0;
+  const btnAll = $('#btnRemoveAll');
+  if (btnAll) btnAll.disabled = state.files.length === 0;
+  const btnClear = $('#btnClearAll');
+  if (btnClear) btnClear.disabled = state.files.length === 0;
+}
+
+function startInlineRename(id, rowEl){
+  if (state.editingFileId) return;
+  const f = fileById(id); if (!f) return;
+  const nameEl = rowEl.querySelector('.file-name');
+  if (!nameEl) return;
+  state.editingFileId = id;
+
+  const original = f.name;
+  const input = document.createElement('input');
+  input.type='text'; input.className='inline-rename'; input.value=original;
+  input.setAttribute('aria-label', 'Rename file ' + original);
+  nameEl.replaceWith(input);
+  input.focus(); input.select();
+
+  let done = false;
+  const finish = (save) => {
+    if (done) return; done = true;
+    state.editingFileId = null;
+    if (save){
+      const newName = input.value.trim();
+      if (newName && newName !== original){
+        snapshot();
+        f.name = uniqueName(newName);
+        const auto = detectFormat(f.name, f.content); if (auto) f.format = auto;
+        persistNow();
+        toast('Renamed: ' + original + ' → ' + f.name, 'ok');
+      }
+    }
+    render();
+  };
+  input.addEventListener('keydown', e => {
+    if (e.key==='Enter'){ e.preventDefault(); finish(true); }
+    else if (e.key==='Escape'){ e.preventDefault(); finish(false); }
+  });
+  input.addEventListener('blur', () => finish(true));
+  input.addEventListener('click', e => e.stopPropagation());
+  input.addEventListener('dblclick', e => e.stopPropagation());
+  input.addEventListener('mousedown', e => e.stopPropagation());
+  input.addEventListener('dragstart', e => e.preventDefault());
+}
+
+/* =========================================================================
+   EDITOR
+   ========================================================================= */
+function validateFile(f){
+  if (!f) return { valid:null, msg:'' };
+  switch (f.format){
+    case 'json': { const r = parseJSON(f.content); return r.ok ? { valid:true, msg:'Valid JSON' } : { valid:false, msg:r.error }; }
+    case 'jsonl': { const r = parseJSONL(f.content); return r.ok ? { valid:true, msg:`${r.records.length} valid JSONL record(s)` } : { valid:false, msg:r.error }; }
+    case 'csv': {
+      const r = parseCSV(f.content);
+      if (!r.ok) return { valid:false, msg:r.error || 'Invalid CSV' };
+      return { valid:true, msg:`${r.headers.length} columns · ${r.rows.length} rows${r.warning?' ⚠ '+r.warning:''}` };
+    }
+    case 'yaml': { const r = parseYAML(f.content); return r.ok ? { valid:true, msg:`${r.docs.length} valid YAML document(s)` } : { valid:false, msg:r.error }; }
+    default: return { valid:null, msg:'Free text (not validated)' };
+  }
+}
+function renderEditor(){
+  const pane = $('#editorPane');
+  const f = activeFile();
+  if (!f){
+    pane.innerHTML = `<div class="editor-empty">
+      <h3>No active file</h3>
+      <p>Import files, create a new one, click <b>Start with Sample</b>, or select a file from the sidebar to start viewing and editing.</p>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;justify-content:center">
+        <button class="btn primary" id="eeNew">＋ New File</button>
+        <button class="btn" id="eeSample">✨ Start with Sample</button>
+        <button class="btn" id="eeImport">⬆ Import Files</button>
+        <button class="btn" id="eeFolder">📁 Import Folder</button>
+      </div>
+    </div>`;
+    $('#eeNew').onclick = () => openNewFileModal();
+    $('#eeSample').onclick = () => loadSampleFiles();
+    $('#eeImport').onclick = () => $('#fileInput').click();
+    $('#eeFolder').onclick = () => $('#folderInput').click();
+    return;
+  }
+  const v = validateFile(f);
+  const lines = countLines(f.content);
+  const size = new Blob([f.content]).size;
+  const canFormat = isStructured(f.format);
+  const canPreview = true;
+  const dirty = isDirty(f);
+
+  let statusHtml = '';
+  if (v.valid === true) statusHtml += `<span class="status-pill s-valid">Valid</span>`;
+  if (v.valid === false) statusHtml += `<span class="status-pill s-invalid">Invalid</span>`;
+  statusHtml += dirty
+    ? `<span class="status-pill s-modified save-hint" id="dirtyPill" role="button" tabindex="0" aria-label="How saving works" title="Click to learn how saving works">Autosave pending <span class="info-i" aria-hidden="true">i</span></span>`
+    : `<span class="status-pill s-saved" id="dirtyPill">Saved</span>`;
+
+  pane.innerHTML = `
+    <div class="ed-head">
+      <div class="ed-name">
+        <span class="badge ${fmtCls(f.format)}">${fmtLabel(f.format)}</span>
+        <span class="t" title="${esc(f.name)}">${esc(f.name)}</span>
+      </div>
+      <div class="ed-stats">
+        <span>${fmtBytes(size)}</span><span>${lines} lines</span><span>${f.content.length} chars</span>
+        ${statusHtml}
+      </div>
+      <div class="ed-actions">
+        <div class="seg" role="tablist" aria-label="View mode">
+          <button id="btnRaw" class="${state.viewMode==='raw'?'active':''}" role="tab" aria-selected="${state.viewMode==='raw'}">Raw</button>
+          ${canFormat?`<button id="btnFmt" class="${state.viewMode==='formatted'?'active':''}" role="tab" aria-selected="${state.viewMode==='formatted'}">Formatted</button>`:''}
+          ${canPreview?`<button id="btnPreview" class="${state.viewMode==='preview'?'active':''}" role="tab" aria-selected="${state.viewMode==='preview'}">Preview</button>`:''}
+        </div>
+        <button class="btn" id="btnWrap" title="Word wrap">${state.wrap?'↩ Wrap ON':'↩ Wrap OFF'}</button>
+        <button class="btn ghost icon" id="btnRename" title="Rename file" aria-label="Rename file">✎</button>
+        <button class="btn ghost icon" id="btnDup" title="Duplicate" aria-label="Duplicate file">⧉</button>
+        <button class="btn ghost icon" id="btnCopy" title="Copy content" aria-label="Copy content to clipboard">📋</button>
+        <button class="btn ghost icon" id="btnDel" title="Delete" aria-label="Delete file">🗑</button>
+      </div>
+    </div>
+    <div class="code-wrap">
+      <div class="gutter" id="gutter" aria-hidden="true"></div>
+      <textarea class="code ${state.wrap?'wrap':''} hidden" id="code" spellcheck="false" aria-label="File content editor"></textarea>
+      <pre class="formatted hidden" id="formatted" aria-label="Formatted view"></pre>
+      <div class="preview-pane hidden" id="preview" aria-label="Rendered preview"></div>
+    </div>
+    ${v.msg ? `<div style="padding:5px 12px;border-top:1px solid var(--border);font-size:11px;color:${v.valid===false?'var(--errText)':'var(--fg3)'};background:var(--bg2)">${v.valid===false?'⚠ ':'ℹ '}${esc(v.msg)}</div>` : ''}
+  `;
+
+  const ta = $('#code');
+  const gut = $('#gutter');
+  const pre = $('#formatted');
+  const pv = $('#preview');
+
+  if (state.viewMode === 'preview'){
+    ta.classList.add('hidden'); gut.classList.add('hidden'); pre.classList.add('hidden');
+    pv.classList.remove('hidden');
+    renderPreviewInto(pv, f);
+  } else if (state.viewMode === 'formatted' && canFormat){
+    ta.classList.add('hidden'); gut.classList.add('hidden'); pv.classList.add('hidden');
+    pre.classList.remove('hidden');
+    pre.textContent = prettyPrint(f);
+  } else {
+    ta.classList.remove('hidden'); gut.classList.remove('hidden'); pre.classList.add('hidden'); pv.classList.add('hidden');
+    ta.value = f.content;
+    updateGutter();
+  }
+
+  function updateGutter(){
+    const n = Math.max(1, countLines(ta.value));
+    let s = ''; for (let i=1;i<=n;i++) s += i + '\n';
+    gut.textContent = s;
+    gut.scrollTop = ta.scrollTop;
+  }
+
+  ta.addEventListener('input', () => {
+    f.content = ta.value;
+    updateGutter();
+    updateToolbarState();
+    snapshotDebounced();
+    setSaveStatus('dirty');
+    scheduleSessionSave();
+    const pill = pane.querySelector('#dirtyPill');
+    if (pill){
+      pill.className = 'status-pill s-modified save-hint';
+      pill.setAttribute('role', 'button');
+      pill.setAttribute('tabindex', '0');
+      pill.setAttribute('aria-label', 'How saving works');
+      pill.setAttribute('title', 'Click to learn how saving works');
+      pill.innerHTML = 'Autosave pending <span class="info-i" aria-hidden="true">i</span>';
+    }
+    debouncedSidebarRefresh();
+  });
+  ta.addEventListener('scroll', () => { gut.scrollTop = ta.scrollTop; });
+  ta.addEventListener('blur', () => { if (isDirty(f)) saveFileNow(f); });
+  ta.addEventListener('keydown', e => {
+    if (e.key === 'Tab'){
+      e.preventDefault();
+      const s = ta.selectionStart, en = ta.selectionEnd;
+      ta.value = ta.value.slice(0,s) + '  ' + ta.value.slice(en);
+      ta.selectionStart = ta.selectionEnd = s + 2;
+      ta.dispatchEvent(new Event('input'));
+    }
+  });
+
+  const on = (id, fn) => { const el = $('#'+id); if (el) el.onclick = fn; };
+  on('btnRaw', () => { if (isDirty(f)) saveFileNow(f); state.viewMode = 'raw'; renderEditor(); });
+  on('btnFmt', () => { if (isDirty(f)) saveFileNow(f); state.viewMode = 'formatted'; renderEditor(); });
+  on('btnPreview', () => { if (isDirty(f)) saveFileNow(f); state.viewMode = 'preview'; renderEditor(); });
+  on('btnWrap', () => { state.wrap = !state.wrap; renderEditor(); });
+  on('btnRename', () => { if (isDirty(f)) saveFileNow(f); renameFile(f); });
+  on('btnDup', () => { if (isDirty(f)) saveFileNow(f); duplicateFile(f); });
+  on('btnDel', () => { if (isDirty(f)) saveFileNow(f); deleteFile(f.id); });
+  on('btnCopy', async () => {
+    try { await navigator.clipboard.writeText(f.content); toast('Content copied', 'ok'); }
+    catch(e){ toast('Copy failed', 'err'); }
+  });
+}
+
+function renderPreviewInto(container, f){
+  if (f.format === 'md'){
+    container.innerHTML = '<div class="md-preview">' + renderMarkdownHTML(f.content) + '</div>';
+  } else if (f.format === 'csv'){
+    container.innerHTML = renderCSVStyled(f.content);
+  } else if (f.format === 'json'){
+    const r = parseJSON(f.content);
+    if (r.ok){ container.innerHTML = '<div class="code-preview"><pre class="code-pre">' + highlightJSON(f.content) + '</pre></div>'; }
+    else { container.innerHTML = '<div class="code-preview"><div class="alert err" style="margin:14px">Invalid JSON: ' + esc(r.error) + '</div></div>'; }
+  } else if (f.format === 'jsonl'){
+    const r = parseJSONL(f.content);
+    if (r.ok){
+      const highlighted = f.content.split('\n').map(line => line.trim() ? highlightJSON(line) : '').join('\n');
+      container.innerHTML = '<div class="code-preview"><pre class="code-pre">' + highlighted + '</pre></div>';
+    } else { container.innerHTML = '<div class="code-preview"><div class="alert err" style="margin:14px">Invalid JSONL: ' + esc(r.error) + '</div></div>'; }
+  } else if (f.format === 'yaml'){
+    const r = parseYAML(f.content);
+    if (r.ok){
+      const pretty = r.docs.map(d => toYAML(d, 0)).join('\n---\n');
+      container.innerHTML = '<div class="code-preview"><pre class="code-pre">' + esc(pretty) + '</pre></div>';
+    } else { container.innerHTML = '<div class="code-preview"><div class="alert err" style="margin:14px">Invalid YAML: ' + esc(r.error) + '</div></div>'; }
+  } else {
+    container.innerHTML = '<div class="code-preview"><pre class="code-pre">' + esc(f.content) + '</pre></div>';
+  }
+}
+function prettyPrint(f){
+  try {
+    switch (f.format){
+      case 'json': { const r = parseJSON(f.content); return r.ok ? JSON.stringify(r.data, null, 2) : '⚠ Cannot format: ' + r.error; }
+      case 'jsonl': { const r = parseJSONL(f.content); return r.ok ? r.records.map(x=>JSON.stringify(x)).join('\n') : '⚠ Cannot format: ' + r.error; }
+      case 'csv': {
+        const r = parseCSV(f.content);
+        if (!r.ok) return '⚠ Invalid CSV';
+        const widths = r.headers.map((h,i)=>Math.max(h.length, ...r.rows.map(row=>String(row[i]??'').length), 3));
+        const line = arr => arr.map((c,i)=>String(c??'').padEnd(widths[i])).join(' | ');
+        return line(r.headers) + '\n' + widths.map(w=>'-'.repeat(w)).join('-+-') + '\n' + r.rows.map(line).join('\n');
+      }
+      case 'yaml': { const r = parseYAML(f.content); return r.ok ? r.docs.map(d=>toYAML(d,0)).join('\n---\n') : '⚠ Cannot format: ' + r.error; }
+    }
+  } catch(e){ return '⚠ ' + e.message; }
+  return f.content;
+}
+
+/* =========================================================================
+   INSERT SNIPPET
+   ========================================================================= */
+function insertSnippet(code){
+  const f = activeFile();
+  if (!f){ toast('No active file', 'warn'); return; }
+  if (state.viewMode !== 'raw'){ state.viewMode = 'raw'; renderEditor(); }
+  const ta = $('#code');
+  if (!ta) return;
+  ta.focus();
+  const start = ta.selectionStart;
+  const end = ta.selectionEnd;
+  const before = f.content.slice(0, start);
+  const after = f.content.slice(end);
+  let prefix = ''; let suffix = '';
+  if (before.length && !before.endsWith('\n')) prefix = '\n';
+  if (after.length && !after.startsWith('\n')) suffix = '\n';
+  const newContent = before + prefix + code + suffix + after;
+  f.content = newContent;
+  ta.value = newContent;
+  const pos = start + prefix.length + code.length;
+  ta.selectionStart = ta.selectionEnd = pos;
+  ta.dispatchEvent(new Event('input'));
+  const preview = code.split('\n')[0].slice(0, 40) + (code.length > 40 ? '…' : '');
+  toast('Inserted: ' + preview, 'ok', 1500);
+}
+
+/* =========================================================================
+   INSPECTOR
+   ========================================================================= */
+function renderInspector(){
+  const f = activeFile();
+  const totalFiles = state.files.length;
+  const totalFmts = new Set(state.files.map(x=>x.format)).size;
+  const totalSize = state.files.reduce((a,x)=>a + new Blob([x.content]).size, 0);
+  const totalLines = state.files.reduce((a,x)=>a + countLines(x.content), 0);
+
+  let html = `<div class="panel">
+    <h4>Workspace Statistics</h4>
+    <div class="stat-grid">
+      <div class="stat"><div class="n">${totalFiles}</div><div class="l">Files</div></div>
+      <div class="stat"><div class="n">${totalFmts}</div><div class="l">Formats</div></div>
+      <div class="stat"><div class="n">${state.checked.size}</div><div class="l">Selected</div></div>
+      <div class="stat"><div class="n">${state.mergeCount}</div><div class="l">Merged</div></div>
+    </div>
+    <div style="margin-top:8px">
+      <div class="kv"><span class="k">Total size</span><span class="v">${fmtBytes(totalSize)}</span></div>
+      <div class="kv"><span class="k">Total lines</span><span class="v">${totalLines}</span></div>
+      <div class="kv"><span class="k">Categories</span><span class="v">${state.categories.length}</span></div>
+    </div>
+  </div>`;
+
+  if (f){
+    const v = validateFile(f);
+    html += `<div class="panel">
+      <h4>Active File</h4>
+      <div class="kv"><span class="k">Name</span><span class="v">${esc(f.name)}</span></div>
+      <div class="kv"><span class="k">Format</span><span class="v">${fmtLabel(f.format)}</span></div>
+      <div class="kv"><span class="k">Size</span><span class="v">${fmtBytes(new Blob([f.content]).size)}</span></div>
+      <div class="kv"><span class="k">Lines</span><span class="v">${countLines(f.content)}</span></div>
+      <div class="kv"><span class="k">Characters</span><span class="v">${f.content.length}</span></div>
+      <div class="kv"><span class="k">Status</span><span class="v">${isDirty(f)?'Unsaved changes':'Saved'}</span></div>
+      <div class="kv"><span class="k">Category</span><span class="v">${esc(catName(f.categoryId))}</span></div>
+    </div>`;
+
+    html += `<div class="panel"><h4>Validation</h4>`;
+    if (v.valid === true) html += `<div class="alert ok">✓ ${esc(v.msg)}</div>`;
+    else if (v.valid === false) html += `<div class="alert err">✕ ${esc(v.msg)}</div>`;
+    else html += `<div class="alert warn">ℹ ${esc(v.msg)}</div>`;
+    if (isStructured(f.format)){
+      html += `<div style="margin-top:8px"><button class="btn" style="width:100%;justify-content:center" id="btnApplyFmt">Format &amp; Apply to Content</button></div>`;
+    }
+    html += `</div>`;
+
+    const targetFmt = f.format;
+    html += `<div class="panel">
+      <h4>Change Format</h4>
+      <select id="fmtSelect" aria-label="Select file format" style="width:100%;padding:6px;border-radius:5px;background:var(--bg3);border:1px solid var(--border);color:var(--fg)">
+        ${Object.keys(FORMATS).map(k=>`<option value="${k}" ${f.format===k?'selected':''}>${FORMATS[k].label} (.${FORMATS[k].ext})</option>`).join('')}
+      </select>
+      <div class="hint">Changing format only changes parsing &amp; validation. Use <b>Convert Content</b> to transform the content into a valid structure for the target format.</div>
+      <button class="btn primary" id="btnConvertText" style="width:100%;justify-content:center;margin-top:8px" title="Convert current content to the selected target format">
+        🔄 Convert Content to <span id="convertTargetLabel">${fmtLabel(targetFmt)}</span>
+      </button>
+      <div class="hint" id="convertHint" style="margin-top:6px">Source format auto-detected from the current content.</div>
+    </div>`;
+
+    html += `<div class="panel">
+      <h4>Format Guide — <span id="guideTitle">${(GUIDES[targetFmt]||GUIDES.txt).title}</span></h4>
+      <div class="hint" style="margin:0 0 8px">Click <b>↳ Insert</b> to drop a snippet at the cursor in the editor.</div>
+      <div class="guide-tabs" id="guideTabs" role="tablist" aria-label="Format guide selector">
+        ${Object.keys(FORMATS).map(k=>`<button class="guide-tab ${k===targetFmt?'active':''}" data-guide="${k}" role="tab" aria-selected="${k===targetFmt}">${FORMATS[k].label}</button>`).join('')}
+      </div>
+      <div id="formatGuide"></div>
+    </div>`;
+  }
+
+  $('#inspector').innerHTML = html;
+
+  const af = $('#btnApplyFmt');
+  if (af) af.onclick = () => {
+    const f2 = activeFile(); if (!f2) return;
+    snapshot();
+    if (f2.format === 'json'){ const r=parseJSON(f2.content); if (r.ok) f2.content=JSON.stringify(r.data,null,2); else return toast('Invalid JSON: '+r.error,'err'); }
+    if (f2.format === 'jsonl'){ const r=parseJSONL(f2.content); if (r.ok) f2.content=r.records.map(x=>JSON.stringify(x)).join('\n'); else return toast('Invalid JSONL','err'); }
+    if (f2.format === 'yaml'){ const r=parseYAML(f2.content); if (r.ok) f2.content=r.docs.map(d=>toYAML(d,0)).join('\n---\n'); else return toast('Invalid YAML','err'); }
+    if (f2.format === 'csv'){ const r=parseCSV(f2.content); if (r.ok) f2.content=toCSV(r.headers, r.rows, r.delimiter); }
+    f2.baseline = f2.content;
+    state.viewMode = 'raw';
+    render(); persistNow(); setSaveStatus('saved'); toast('Content formatted', 'ok');
+  };
+
+  const fs = $('#fmtSelect');
+  if (fs) fs.onchange = () => {
+    const f2 = activeFile(); if (!f2) return;
+    snapshot();
+    f2.format = fs.value;
+    state.guideTab = fs.value;
+    const lbl = $('#convertTargetLabel'); if (lbl) lbl.textContent = fmtLabel(fs.value);
+    $$('#guideTabs .guide-tab').forEach(t=>{ const active = t.dataset.guide===fs.value; t.classList.toggle('active', active); t.setAttribute('aria-selected', active?'true':'false'); });
+    renderFormatGuide(fs.value);
+    render(); persistNow();
+    toast('Format changed to ' + fmtLabel(fs.value), 'ok');
+  };
+
+  const bc = $('#btnConvertText');
+  if (bc) bc.onclick = handleConvertText;
+
+  $$('#guideTabs .guide-tab').forEach(tab => {
+    tab.onclick = () => {
+      state.guideTab = tab.dataset.guide;
+      $$('#guideTabs .guide-tab').forEach(t=>{ const active = t===tab; t.classList.toggle('active', active); t.setAttribute('aria-selected', active?'true':'false'); });
+      renderFormatGuide(tab.dataset.guide);
+    };
+  });
+
+  renderFormatGuide(state.guideTab || targetFmt);
+}
+
+function renderFormatGuide(fmt){
+  const guide = GUIDES[fmt] || GUIDES.txt;
+  const titleEl = $('#guideTitle'); if (titleEl) titleEl.textContent = guide.title;
+  const body = $('#formatGuide'); if (!body) return;
+  body.innerHTML = guide.items.map((it, idx) =>
+    `<div class="guide-item">
+      <div class="guide-label-row">
+        <div class="guide-label">${esc(it.label)}</div>
+        <button class="guide-insert" data-idx="${idx}" title="Insert at cursor" aria-label="Insert ${esc(it.label)}">↳ Insert</button>
+      </div>
+      <pre class="guide-code">${esc(it.code)}</pre>
+    </div>`
+  ).join('');
+  body.querySelectorAll('.guide-insert').forEach(btn => {
+    btn.onclick = () => {
+      const item = guide.items[+btn.dataset.idx];
+      if (item) insertSnippet(item.code);
+    };
+  });
+}
+
+function catName(id){ const c = state.categories.find(x=>x.id===id); return c ? c.name : '—'; }
+
+async function handleConvertText(){
+  const f = activeFile(); if (!f) return;
+  const target = $('#fmtSelect') ? $('#fmtSelect').value : f.format;
+  const sourceFormat = guessSourceFormat(f.content);
+  if (sourceFormat === target){ toast('Content is already in ' + fmtLabel(target) + ' form.', 'warn', 3200); return; }
+  if (!f.content.trim()){ toast('File is empty — nothing to convert.', 'warn'); return; }
+  const result = convertContent(f.content, sourceFormat, target);
+  if (!result.ok){ toast('Conversion failed: ' + result.error, 'err', 5000); return; }
+  const ok = await confirmDialog(
+    'Convert Content',
+    `Convert content from <b>${fmtLabel(sourceFormat)}</b> to <b>${fmtLabel(target)}</b>?<br><br>` +
+    `<span style="color:var(--fg3);font-size:12px">The current content will be replaced. Use Undo (Ctrl+Z) to revert if needed.</span>`,
+    'Convert'
+  );
+  if (!ok) return;
+  snapshot();
+  f.content = result.content;
+  f.format = target;
+  f.baseline = f.content;
+  state.viewMode = 'raw';
+  render(); persistNow();
+  setSaveStatus('saved');
+  toast(`Converted from ${fmtLabel(sourceFormat)} → ${fmtLabel(target)}`, 'ok');
+}
+
+/* =========================================================================
+   STATUS / TOOLBAR
+   ========================================================================= */
+function updateStatusbar(){
+  const totalFiles = state.files.length;
+  const totalFmts = new Set(state.files.map(x=>x.format)).size;
+  const totalSize = state.files.reduce((a,x)=>a + new Blob([x.content]).size, 0);
+  const totalLines = state.files.reduce((a,x)=>a + countLines(x.content), 0);
+  const unsaved = state.files.filter(isDirty).length;
+  $('#statusbar').innerHTML = `
+    <span>Files: <b>${totalFiles}</b></span>
+    <span>Formats: <b>${totalFmts}</b></span>
+    <span>Selected: <b>${state.checked.size}</b></span>
+    <span>Size: <b>${fmtBytes(totalSize)}</b></span>
+    <span>Lines: <b>${totalLines}</b></span>
+    <span>Merged: <b>${state.mergeCount}</b></span>
+    <span>Unsaved: <b>${unsaved}</b></span>
+    <span style="margin-left:auto;color:var(--fg3)">Autosave · local-first</span>
+  `;
+}
+function updateToolbarState(){
+  $('#btnUndo').disabled = state.history.undo.length === 0;
+  $('#btnRedo').disabled = state.history.redo.length === 0;
+  $('#btnSaveAs').disabled = !activeFile();
+  $('#btnExport').disabled = !activeFile();
+  $('#btnMerge').disabled = state.files.length === 0;
+  $('#btnMergeSelected').disabled = state.checked.size === 0;
+  updateSelectionCounts();
+}
+function render(){ renderSidebar(); renderEditor(); renderInspector(); updateStatusbar(); updateToolbarState(); }
+
+/* =========================================================================
+   FILE ACTIONS
+   ========================================================================= */
+function openFile(id){
+  const prev = activeFile();
+  if (prev && prev.id !== id && isDirty(prev)) saveFileNow(prev);
+  state.activeId = id;
+  state.viewMode = 'raw';
+  state.guideTab = null;
+  render();
+  updateToolbarState();
+}
+function renameFile(f){
+  openPrompt({
+    title: 'Rename File',
+    fields: [{ id:'name', label:'New name', value:f.name }],
+    ok: (vals) => {
+      if (!vals.name.trim()) return;
+      snapshot();
+      f.name = uniqueName(vals.name.trim());
+      const auto = detectFormat(f.name, f.content); if (auto) f.format = auto;
+      render(); persistNow(); toast('File renamed', 'ok');
+    }
+  });
+}
+function duplicateFile(f){
+  if (!f) return;
+  snapshot();
+  const ext = extOf(f.name);
+  const base = ext ? f.name.slice(0, -(ext.length+1)) : f.name;
+  const nf = addFile(uniqueName(`${base}-copy${ext?'.'+ext:''}`), f.content, f.format, f.categoryId);
+  nf.baseline = nf.content;
+  state.activeId = nf.id;
+  render(); persistNow();
+  toast('Duplicated: ' + f.name + ' → ' + nf.name, 'ok');
+}
+async function deleteFile(id){
+  const f = fileById(id); if (!f) return;
+  const ok = await confirmDialog(
+    'Delete File',
+    `Delete <b>${esc(f.name)}</b> permanently from this browser session?<br><br>` +
+    `<span style="color:var(--fg3);font-size:12px">The stored session copy will be deleted and this action cannot be undone. The original file on your computer is <b>not</b> affected.</span>`,
+    'Delete Permanently'
+  );
+  if (!ok) return;
+
+  clearHistory();
+  const removedName = f.name;
+  state.files = state.files.filter(x => x.id !== id);
+  state.checked.delete(id);
+  if (state.activeId === id) state.activeId = state.files[0] ? state.files[0].id : null;
+  render();
+  await persistNow();
+  toast(`Deleted permanently: ${removedName}`, 'ok', 3200);
+}
+
+async function removeSelectedFiles(){
+  const ids = Array.from(state.checked);
+  if (!ids.length) return toast('No files selected', 'warn');
+  const ok = await confirmDialog(
+    'Remove Selected Files',
+    `Remove <b>${ids.length}</b> selected file${ids.length>1?'s':''} permanently?<br><br>` +
+    `<span style="color:var(--fg3);font-size:12px">Selected files will be deleted from the browser session and cannot be restored with Undo or refresh. Original files on your computer are <b>not</b> affected.</span>`,
+    'Remove Permanently'
+  );
+  if (!ok) return;
+
+  clearHistory();
+  const removeSet = new Set(ids);
+  state.files = state.files.filter(f => !removeSet.has(f.id));
+  state.checked.clear();
+  if (!state.files.some(f => f.id === state.activeId)) state.activeId = state.files[0] ? state.files[0].id : null;
+  render();
+  await persistNow();
+  toast(`Removed ${ids.length} file${ids.length>1?'s':''} permanently`, 'ok', 3200);
+}
+
+async function removeAllFiles(){
+  if (!state.files.length) return toast('Workspace is already empty', 'warn');
+  const n = state.files.length;
+  const ok = await confirmDialog(
+    'Remove All Files',
+    `Remove <b>all ${n}</b> file${n>1?'s':''} permanently?<br><br>` +
+    `<span style="color:var(--fg3);font-size:12px">All stored file data will be deleted from IndexedDB and the browser backup. This action cannot be undone. Original files on your computer are <b>not</b> affected.</span>`,
+    'Remove All Permanently'
+  );
+  if (!ok) return;
+  clearHistory();
+  state.files = []; state.checked.clear(); state.activeId = null;
+  render();
+  await persistNow();
+  toast(`Removed all ${n} files`, 'ok', 3600);
+}
+
+async function clearAllFiles(){
+  if (!state.files.length) return toast('Workspace is already empty', 'warn');
+  const n = state.files.length;
+  const ok = await confirmDialog(
+    'Clear All Files',
+    `Clear the workspace by permanently removing <b>all ${n}</b> file${n>1?'s':''}?<br><br>` +
+    `<span style="color:var(--fg3);font-size:12px">File data will be deleted from IndexedDB and the browser backup. Categories are kept. This action cannot be undone.</span>`,
+    'Clear Permanently'
+  );
+  if (!ok) return;
+  clearHistory();
+  state.files = []; state.checked.clear(); state.activeId = null;
+  render();
+  await persistNow();
+  toast(`Workspace cleared — ${n} stored files deleted`, 'ok', 3600);
+}
+
+function openNewFileModal(){
+  const fmtOpts = Object.keys(FORMATS).map(k=>
+    `<option value="${k}"${k==='md'?' selected':''}>${FORMATS[k].label} (.${FORMATS[k].ext})</option>`
+  ).join('');
+  openPrompt({
+    title: '＋ Create New File',
+    html: `
+      <div class="field"><label for="nfName">File Name</label><input type="text" id="nfName" value="untitled.md"></div>
+      <div class="field"><label for="nfFmt">Format</label><select id="nfFmt">${fmtOpts}</select></div>
+      <div class="field"><label for="nfContent">Initial Content (optional)</label><textarea id="nfContent" placeholder="Leave empty to start from scratch..."></textarea></div>
+    `,
+    ok: () => {
+      const name = ($('#nfName').value || 'untitled.md').trim();
+      const fmt = $('#nfFmt').value;
+      const content = $('#nfContent').value;
+      snapshot();
+      const f = addFile(uniqueName(name), content, fmt);
+      state.activeId = f.id;
+      render(); persistNow();
+      toast('New file created', 'ok');
+    }
+  });
+
+  const fmtEl = $('#nfFmt');
+  const nameEl = $('#nfName');
+  if (fmtEl && nameEl){
+    const syncExt = () => {
+      const chosen = fmtEl.value;
+      const ext = (FORMATS[chosen] && FORMATS[chosen].ext) || 'txt';
+      const current = nameEl.value.trim();
+      if (current === '' || /^untitled(\.\w+)?$/i.test(current)){
+        nameEl.value = 'untitled.' + ext;
+      }
+    };
+    fmtEl.addEventListener('change', syncExt);
+  }
+}
+function openPrompt({ title, fields, html, ok }){
+  $('#pTitle').textContent = title;
+  const body = $('#pBody');
+  if (html) body.innerHTML = html;
+  else body.innerHTML = (fields||[]).map(f=>`
+    <div class="field">
+      <label for="pf_${f.id}">${esc(f.label)}</label>
+      <input type="text" id="pf_${f.id}" value="${esc(f.value||'')}">
+    </div>`).join('');
+  $('#promptModal').classList.remove('hidden');
+  const first = body.querySelector('input[type=text],textarea,select');
+  if (first) setTimeout(() => first.focus(), 50);
+  $('#pOk').onclick = () => {
+    const vals = {};
+    (fields||[]).forEach(f=>{ const el=$('#pf_'+f.id); if (el) vals[f.id]=el.value; });
+    $('#promptModal').classList.add('hidden');
+    ok(vals);
+  };
+  body.onkeydown = e => { if (e.key==='Enter' && e.target.tagName !== 'TEXTAREA'){ e.preventDefault(); $('#pOk').click(); } };
+}
+
+/* =========================================================================
+   MERGE ENGINE
+   ========================================================================= */
+function parseSource(f){
+  switch (f.format){
+    case 'json': { const r=parseJSON(f.content); return r.ok?{ok:true,kind:'json',value:r.data}:{ok:false,error:r.error}; }
+    case 'jsonl': { const r=parseJSONL(f.content); return r.ok?{ok:true,kind:'jsonl',value:r.records}:{ok:false,error:r.error}; }
+    case 'csv': { const r=parseCSV(f.content); return r.ok?{ok:true,kind:'csv',value:r.objects,headers:r.headers}:{ok:false,error:r.error||'Invalid CSV'}; }
+    case 'yaml': { const r=parseYAML(f.content); return r.ok?{ok:true,kind:'yaml',value:r.docs.length===1?r.docs[0]:r.docs}:{ok:false,error:r.error}; }
+    default: return { ok:true, kind:'text', value:f.content };
+  }
+}
+function computeMerge(opts){
+  const { files, outputFormat, mode, separator, strategy, csvStrategy, includeMeta, dedupe, compact } = opts;
+  const warnings = [];
+  const isTextOut = (outputFormat==='txt' || outputFormat==='md');
+  const effectiveMode = mode==='auto' ? (isTextOut?'lossless':'structured') : mode;
+  let content = '';
+  if (effectiveMode==='lossless' || isTextOut){
+    const parts = [];
+    for (const f of files){
+      let c = f.content;
+      if (compact) c = c.replace(/[ \t]+$/gm,'').replace(/\n{3,}/g,'\n\n').trim();
+      let head = '';
+      const bn = baseName(f.name);
+      switch (separator){
+        case 'file': head = `===== FILE: ${f.name} =====\n`; break;
+        case 'heading': head = outputFormat==='md' ? `# ${bn}\n\n` : `${bn}\n${'='.repeat(bn.length)}\n\n`; break;
+        case 'comment': head = outputFormat==='md' ? `<!-- FILE: ${f.name} -->\n` : `# FILE: ${f.name}\n`; break;
+        case 'divider': head = `---------- ${f.name} ----------\n`; break;
+        default: head = '';
+      }
+      parts.push(head + c);
+    }
+    content = parts.join(effectiveMode==='lossless' && compact ? '\n' : '\n\n');
+    if (files.some(f=>isStructured(f.format))) warnings.push('Some source files are structured formats. In Lossless Merge, raw content is copied as-is without parsing.');
+  } else {
+    const parsed = files.map(f=>({ f, p: parseSource(f) }));
+    const bad = parsed.filter(x=>!x.p.ok);
+    for (const b of bad) warnings.push(`${b.f.name}: ${b.p.error}`);
+    const good = parsed.filter(x=>x.p.ok);
+    if (outputFormat === 'json'){
+      let out;
+      if (strategy === 'merge'){ let acc = {};
+        for (const { f, p } of good){ if (p.value && typeof p.value==='object' && !Array.isArray(p.value)) acc = deepMerge(acc, p.value); else warnings.push(`${f.name}: not an object, skipped in Deep Merge mode.`); }
+        out = acc;
+      } else if (strategy === 'array'){ const arr = [];
+        for (const { f, p } of good){ if (Array.isArray(p.value)) arr.push(...p.value); else arr.push(includeMeta ? { _source:f.name, _format:f.format, content:p.value } : p.value); }
+        out = arr;
+      } else {
+        const docs = good.map(({ f, p }) => includeMeta ? { _source:f.name, _format:f.format, _bytes:new Blob([f.content]).size, content:p.value } : p.value);
+        out = { documents: docs };
+      }
+      if (includeMeta){ out = Object.assign({ _meta: { generatedAt:new Date().toISOString(), outputFormat:'json', mergeMode:'structured', sourceCount:files.length, sources:files.map(f=>f.name) } }, Array.isArray(out) ? { documents: out } : out); }
+      if (dedupe){
+        if (Array.isArray(out.documents)){ const seen = new Set(); const ded = [];
+          for (const d of out.documents){ const k = JSON.stringify(d); if (!seen.has(k)){ seen.add(k); ded.push(d); } }
+          warnings.push(`Duplicates removed: ${out.documents.length - ded.length} document(s).`);
+          out.documents = ded;
+        } else if (Array.isArray(out)){ const seen = new Set(); const ded = [];
+          for (const d of out){ const k = JSON.stringify(d); if (!seen.has(k)){ seen.add(k); ded.push(d); } }
+          out = ded;
+        }
+      }
+      content = JSON.stringify(out, null, 2);
+    }
+    else if (outputFormat === 'jsonl'){
+      const lines = [];
+      for (const { f, p } of good){
+        let recs;
+        if (p.kind === 'text'){ recs = [includeMeta ? { _source:f.name, content:p.value } : { content:p.value }]; warnings.push(`${f.name}: text wrapped as JSON record.`); }
+        else if (Array.isArray(p.value)) recs = p.value;
+        else recs = [p.value];
+        for (const r of recs){ lines.push(JSON.stringify(includeMeta && (r===null || typeof r!=='object' || Array.isArray(r)) ? { _source:f.name, content:r } : r)); }
+      }
+      if (dedupe){ const seen = new Set(); const ded = [];
+        for (const l of lines){ if (!seen.has(l)){ seen.add(l); ded.push(l); } }
+        warnings.push(`Duplicates removed: ${lines.length - ded.length} record(s).`);
+        content = ded.join('\n');
+      } else content = lines.join('\n');
+    }
+    else if (outputFormat === 'csv'){
+      const allKeys = []; const rows = [];
+      for (const { f, p } of good){
+        let objs = [];
+        if (p.kind==='csv' || p.kind==='jsonl') objs = p.value;
+        else if (p.kind==='json'){
+          if (Array.isArray(p.value)) objs = p.value.map(v=>(v&&typeof v==='object'&&!Array.isArray(v))?v:{value:v});
+          else if (p.value && typeof p.value==='object') objs = [p.value];
+          else objs = [{value:p.value}];
+        } else if (p.kind==='yaml'){ const v = p.value;
+          objs = Array.isArray(v) ? v.map(x=>(x&&typeof x==='object'&&!Array.isArray(x))?x:{value:x}) : [v];
+        } else { objs = [{ content:p.value }]; warnings.push(`${f.name}: raw text placed in a single CSV column.`); }
+        for (const o of objs){
+          const obj = (o && typeof o==='object' && !Array.isArray(o)) ? Object.assign({}, o) : { value:o };
+          if (includeMeta) obj._source = obj._source || f.name;
+          for (const k of Object.keys(obj)) if (!allKeys.includes(k)) allKeys.push(k);
+          rows.push(obj);
+        }
+      }
+      let finalRows = rows;
+      if (csvStrategy === 'same'){
+        const firstHeaders = good.length ? (good[0].p.kind==='csv' ? good[0].p.headers : Object.keys(rows[0]||{})) : [];
+        const cols = firstHeaders.length ? firstHeaders : allKeys;
+        const kept = [];
+        for (const r of rows){ if (Object.keys(r).every(k=>cols.includes(k))) kept.push(r); else warnings.push('Some rows skipped due to different columns (Same Columns).'); }
+        finalRows = kept;
+        content = toCSV(cols, finalRows, ',');
+      } else { content = toCSV(allKeys, finalRows, ','); }
+      if (dedupe){ const seen = new Set(); const ded = [];
+        for (const r of finalRows){ const k=JSON.stringify(r); if (!seen.has(k)){ seen.add(k); ded.push(r); } }
+        warnings.push(`Duplicates removed: ${finalRows.length - ded.length} row(s).`);
+        finalRows = ded;
+        content = toCSV(allKeys, finalRows, ',');
+      }
+    }
+    else if (outputFormat === 'yaml'){
+      if (strategy === 'multidoc'){ content = good.map(({ p }) => toYAML(p.value, 0)).join('\n---\n'); }
+      else if (strategy === 'merge'){ let acc = {};
+        for (const { f, p } of good){ if (p.value && typeof p.value==='object' && !Array.isArray(p.value)) acc = deepMerge(acc, p.value); else warnings.push(`${f.name}: not an object, skipped in Deep Merge.`); }
+        content = toYAML(acc, 0);
+      } else if (strategy === 'array'){ const arr = [];
+        for (const { f, p } of good){ if (Array.isArray(p.value)) arr.push(...p.value); else arr.push(includeMeta ? { _source:f.name, content:p.value } : p.value); }
+        content = toYAML(arr, 0);
+      } else {
+        const docs = good.map(({ f, p }) => includeMeta ? { _source:f.name, _format:f.format, content:p.value } : p.value);
+        content = toYAML({ documents: docs }, 0);
+      }
+      if (includeMeta && strategy !== 'merge'){ content = '# generated by Multi-File Compiler\n# generatedAt: ' + new Date().toISOString() + '\n# sources: ' + files.map(f=>f.name).join(', ') + '\n' + content; }
+    }
+  }
+  if (separator !== 'none' && effectiveMode !== 'lossless' && !isTextOut){ warnings.push('Text separator only applies to TXT/Markdown output. For structured output, source identity is stored as _source field when metadata is enabled.'); }
+  if (effectiveMode === 'structured'){ const mixed = new Set(files.map(f=>f.format)).size > 1; if (mixed) warnings.push('Sources have mixed formats. Conversion re-represents the data — original semantic structure may differ.'); }
+  return { content, warnings, effectiveMode };
+}
+
+/* =========================================================================
+   MERGE UI
+   ========================================================================= */
+let mergeState = { order: [], tab: 'after', result: null };
+function openMergeModal(presetScope){
+  if (!state.files.length) return toast('No files to merge yet', 'warn');
+  const catSel = $('#mScopeCat');
+  catSel.innerHTML = state.categories.map(c=>`<option value="${c.id}">${esc(c.name)}</option>`).join('') + `<option value="">(Uncategorized)</option>`;
+  const fmtSel = $('#mScopeFmt');
+  fmtSel.innerHTML = Object.keys(FORMATS).filter(k=>state.files.some(f=>f.format===k)).map(k=>`<option value="${k}">${FORMATS[k].label}</option>`).join('');
+  if (presetScope==='checked' && state.checked.size) $('#mScope').value = 'checked';
+  else $('#mScope').value = 'all';
+  $('#mScopeCatWrap').style.display = 'none';
+  $('#mScopeFmtWrap').style.display = 'none';
+  mergeState.tab = 'after';
+  $$('#mergeModal .tab').forEach(t=>{ const active = t.dataset.mtab==='after'; t.classList.toggle('active', active); t.setAttribute('aria-selected', active?'true':'false'); });
+  $('#mergeModal').classList.remove('hidden');
+  refreshMergeSources();
+}
+function currentMergeFiles(){
+  const scope = $('#mScope').value;
+  let files = state.files.slice();
+  if (scope==='checked') files = files.filter(f=>state.checked.has(f.id));
+  else if (scope==='active') files = files.filter(f=>f.id===state.activeId);
+  else if (scope==='category'){ const cid = $('#mScopeCat').value || null; files = files.filter(f=>(f.categoryId||null)===cid); }
+  else if (scope==='format') files = files.filter(f=>f.format===$('#mScopeFmt').value);
+  return files;
+}
+function refreshMergeSources(){
+  const files = currentMergeFiles();
+  const prevOrder = mergeState.order;
+  const ids = files.map(f=>f.id);
+  mergeState.order = ids.slice().sort((a,b)=>{ const ia = prevOrder.indexOf(a), ib = prevOrder.indexOf(b); if (ia===-1 && ib===-1) return 0; if (ia===-1) return 1; if (ib===-1) return -1; return ia - ib; });
+  $('#mSrcCount').textContent = `(${mergeState.order.length})`;
+  const list = $('#mSrcList');
+  if (!mergeState.order.length){ list.innerHTML = `<div style="padding:14px;text-align:center;color:var(--fg3);font-size:11px">No files in this scope</div>`; }
+  else {
+    list.innerHTML = mergeState.order.map(id=>{
+      const f = fileById(id); if (!f) return '';
+      return `<div class="src-item" draggable="true" data-id="${id}">
+        <span class="badge ${fmtCls(f.format)}">${fmtLabel(f.format)}</span>
+        <span class="nm" title="${esc(f.name)}">${esc(f.name)}</span>
+        <span style="font-size:10px;color:var(--fg3)">${fmtBytes(new Blob([f.content]).size)}</span>
+      </div>`;
+    }).join('');
+  }
+  const outFmt = $('#mOutFmt').value;
+  const ext = FORMATS[outFmt].ext;
+  const cur = $('#mOutName').value;
+  if (!cur || /\.(txt|md|json|jsonl|ndjson|csv|yaml|yml)$/i.test(cur)) $('#mOutName').value = 'compiled-output.' + ext;
+  const strategyWrap = $('#mStrategyWrap');
+  const csvWrap = $('#mCsvStrategy').parentElement;
+  if (outFmt==='json' || outFmt==='yaml'){ strategyWrap.style.display=''; csvWrap.style.display='none'; }
+  else if (outFmt==='csv'){ strategyWrap.style.display='none'; csvWrap.style.display=''; }
+  else { strategyWrap.style.display='none'; csvWrap.style.display='none'; }
+  updateMergePreview();
+}
+function updateMergePreview(){
+  const files = mergeState.order.map(id=>fileById(id)).filter(Boolean);
+  const outFmt = $('#mOutFmt').value;
+  const opts = {
+    files, outputFormat:outFmt,
+    mode: $('#mMode').value, separator: $('#mSep').value, strategy: $('#mStrategy').value,
+    csvStrategy: $('#mCsvStrategy').value, includeMeta: $('#mMeta').checked,
+    dedupe: $('#mDedupe').checked, compact: $('#mCompact').checked
+  };
+  const res = computeMerge(opts);
+  mergeState.result = res;
+  const totalChars = files.reduce((a,f)=>a+f.content.length,0);
+  const totalLines = files.reduce((a,f)=>a+countLines(f.content),0);
+  let records = 0;
+  for (const f of files){
+    if (f.format==='jsonl'){ const r=parseJSONL(f.content); if (r.ok) records += r.records.length; }
+    else if (f.format==='csv'){ const r=parseCSV(f.content); if (r.ok) records += r.rows.length; }
+    else if (f.format==='json'){ const r=parseJSON(f.content); if (r.ok) records += Array.isArray(r.data)?r.data.length:1; }
+    else if (f.format==='yaml'){ const r=parseYAML(f.content); if (r.ok) records += r.docs.length; }
+  }
+  $('#mLegend').innerHTML = `
+    <span>Source files: <b>${files.length}</b></span>
+    <span>Total chars: <b>${totalChars.toLocaleString()}</b></span>
+    <span>Total lines: <b>${totalLines.toLocaleString()}</b></span>
+    <span>Records/rows: <b>${records}</b></span>
+    <span>Output: <b>${fmtLabel(outFmt)}</b></span>
+    <span>Mode: <b>${res.effectiveMode==='lossless'?'Lossless':'Structured'}</b></span>
+    <span>Output size: <b>${fmtBytes(new Blob([res.content]).size)}</b></span>
+  `;
+  const warnHtml = res.warnings.length ? `<div class="alert warn" style="margin-bottom:8px">⚠ ${res.warnings.slice(0,6).map(esc).join('<br>⚠ ')}${res.warnings.length>6?`<br>… (+${res.warnings.length-6} more note(s))`:''}</div>` : '';
+  let previewContent;
+  if (mergeState.tab === 'after'){ previewContent = res.content.slice(0, 120000) + (res.content.length > 120000 ? '\n\n… [preview truncated, ' + (res.content.length - 120000).toLocaleString() + ' more chars]' : ''); }
+  else {
+    previewContent = files.map(f =>
+      `===== ${f.name} =====\nFormat : ${fmtLabel(f.format)}\nSize   : ${fmtBytes(new Blob([f.content]).size)}\nLines  : ${countLines(f.content)}\n` +
+      `----------------------------------------\n` +
+      f.content.slice(0, 1200) + (f.content.length > 1200 ? '\n… [truncated]' : '')
+    ).join('\n\n\n');
+  }
+  $('#mWarnings').innerHTML = warnHtml;
+  $('#mPreview').textContent = files.length ? previewContent : '(no sources)';
+}
+
+/* =========================================================================
+   EXPORT
+   ========================================================================= */
+async function downloadContent(name, content, mime){
+  const blob = new Blob([content], { type: mime || 'text/plain;charset=utf-8' });
+  if (window.showSaveFilePicker){
+    try {
+      const handle = await window.showSaveFilePicker({ suggestedName: name, types: [{ description:'Text', accept:{ 'text/plain':['.txt','.md','.json','.jsonl','.csv','.yaml','.yml'] } }] });
+      const w = await handle.createWritable();
+      await w.write(blob); await w.close();
+      toast('Saved to disk: ' + name, 'ok');
+      return;
+    } catch(e){ if (e.name === 'AbortError') return; }
+  }
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a'); a.href = url; a.download = name;
+  document.body.appendChild(a); a.click(); a.remove();
+  setTimeout(() => URL.revokeObjectURL(url), 1500);
+  toast('Download started: ' + name, 'ok');
+}
+
+/* =========================================================================
+   DND
+   ========================================================================= */
+let dragFileId = null, dragCatId = null;
+function bindSidebarDnD(){
+  const list = $('#fileList');
+  list.addEventListener('dragstart', e => {
+    const row = e.target.closest('.file-row');
+    const catHead = e.target.closest('.cat-head');
+    if (row){
+      if (e.target.closest('.row-actions')){ e.preventDefault(); return; }
+      dragFileId = row.dataset.id;
+      row.classList.add('dragging');
+      e.dataTransfer.effectAllowed='move';
+      try{ e.dataTransfer.setData('text/plain', dragFileId); }catch(err){}
+    }
+    else if (catHead && catHead.getAttribute('draggable')==='true'){ dragCatId = catHead.dataset.cat; e.dataTransfer.effectAllowed='move'; try{ e.dataTransfer.setData('text/plain','cat:'+dragCatId); }catch(err){} }
+  });
+  list.addEventListener('dragend', () => {
+    $$('.file-row.dragging').forEach(el=>el.classList.remove('dragging'));
+    $$('.dragover-top').forEach(el=>el.classList.remove('dragover-top'));
+    $$('.cat.dragover').forEach(el=>el.classList.remove('dragover'));
+    dragFileId = null; dragCatId = null;
+  });
+  list.addEventListener('dragover', e => {
+    e.preventDefault();
+    const row = e.target.closest('.file-row');
+    const cat = e.target.closest('.cat');
+    $$('.dragover-top').forEach(el=>el.classList.remove('dragover-top'));
+    $$('.cat.dragover').forEach(el=>el.classList.remove('dragover'));
+    if (dragFileId){ if (row) row.classList.add('dragover-top'); else if (cat) cat.classList.add('dragover'); }
+    else if (dragCatId && cat) cat.classList.add('dragover');
+  });
+  list.addEventListener('drop', e => {
+    e.preventDefault();
+    $$('.dragover-top').forEach(el=>el.classList.remove('dragover-top'));
+    $$('.cat.dragover').forEach(el=>el.classList.remove('dragover'));
+    const row = e.target.closest('.file-row');
+    const cat = e.target.closest('.cat');
+    if (dragFileId){
+      const f = fileById(dragFileId); if (!f) return;
+      snapshot();
+      if (row && row.dataset.id !== dragFileId){
+        const target = fileById(row.dataset.id);
+        if (target){ const from = state.files.indexOf(f); state.files.splice(from, 1); const to = state.files.indexOf(target); state.files.splice(to, 0, f); f.categoryId = target.categoryId; }
+      } else if (cat){ f.categoryId = cat.dataset.cat || null; }
+      render(); persistNow();
+    } else if (dragCatId && cat){
+      const targetCid = cat.dataset.cat;
+      if (targetCid && targetCid !== dragCatId){
+        snapshot();
+        const from = state.categories.findIndex(c=>c.id===dragCatId);
+        const to = state.categories.findIndex(c=>c.id===targetCid);
+        if (from>-1 && to>-1){ const [c] = state.categories.splice(from, 1); state.categories.splice(to, 0, c); render(); persistNow(); }
+      }
+    }
+  });
+}
+function bindMergeDnD(){
+  const list = $('#mSrcList');
+  let draggingId = null;
+  list.addEventListener('dragstart', e => { const it = e.target.closest('.src-item'); if (!it) return; draggingId = it.dataset.id; it.classList.add('dragging'); e.dataTransfer.effectAllowed='move'; try{ e.dataTransfer.setData('text/plain', draggingId); }catch(err){} });
+  list.addEventListener('dragend', () => { $$('.src-item').forEach(el=>el.classList.remove('dragging','dragover-top')); draggingId = null; });
+  list.addEventListener('dragover', e => { e.preventDefault(); const it = e.target.closest('.src-item'); $$('.src-item').forEach(el=>el.classList.remove('dragover-top')); if (it && it.dataset.id !== draggingId) it.classList.add('dragover-top'); });
+  list.addEventListener('drop', e => {
+    e.preventDefault();
+    const it = e.target.closest('.src-item');
+    if (!it || !draggingId || it.dataset.id === draggingId) return;
+    const from = mergeState.order.indexOf(draggingId), to = mergeState.order.indexOf(it.dataset.id);
+    if (from>-1 && to>-1){ mergeState.order.splice(from, 1); mergeState.order.splice(to, 0, draggingId); refreshMergeSources(); }
+  });
+}
+function bindGlobalDrop(){
+  const overlay = document.createElement('div');
+  overlay.style.cssText = 'position:fixed;inset:0;z-index:90;border:3px dashed var(--accentText);background:var(--accentSoft);display:none;align-items:center;justify-content:center;font-size:16px;font-weight:600;color:var(--fg);pointer-events:none;border-radius:10px;margin:8px';
+  overlay.textContent = 'Drop file / folder here to import (TXT · MD · JSON · JSONL · CSV · YAML only)';
+  document.body.appendChild(overlay);
+  let depth = 0;
+  window.addEventListener('dragenter', e => { if (!e.dataTransfer || !Array.from(e.dataTransfer.types||[]).includes('Files')) return; depth++; overlay.style.display='flex'; });
+  window.addEventListener('dragleave', () => { depth = Math.max(0, depth-1); if (!depth) overlay.style.display='none'; });
+  window.addEventListener('dragover', e => { e.preventDefault(); });
+  window.addEventListener('drop', async e => {
+    if (!e.dataTransfer || !e.dataTransfer.files || !e.dataTransfer.files.length) return;
+    if (e.target.closest('#fileList') || e.target.closest('#mSrcList')) return;
+    e.preventDefault(); depth = 0; overlay.style.display='none';
+    const items = await filesFromDataTransfer(e.dataTransfer);
+    await importFiles(items);
+  });
+}
+async function filesFromDataTransfer(dt){
+  const out = [];
+  const entries = [];
+  if (dt.items){
+    for (const it of Array.from(dt.items)){ if (it.kind==='file' && it.webkitGetAsEntry){ const en = it.webkitGetAsEntry(); if (en) entries.push(en); } }
+  }
+  async function walk(entry, path){
+    if (entry.isFile){ const file = await new Promise((res, rej)=>entry.file(res, rej)); out.push({ file, path }); }
+    else if (entry.isDirectory){ const reader = entry.createReader(); let batch; do { batch = await new Promise((res, rej)=>reader.readEntries(res, rej)); for (const en of batch) await walk(en, path); } while (batch.length); }
+  }
+  for (const en of entries) await walk(en, '');
+  if (!out.length) for (const f of Array.from(dt.files)) out.push({ file:f, path:'' });
+  return out;
+}
+
+/* =========================================================================
+   WIRING
+   ========================================================================= */
+function initTheme(){
+  document.documentElement.setAttribute('data-theme', state.theme);
+  $('#btnTheme').textContent = state.theme === 'dark' ? '🌙' : '☀️';
+  $('#btnTheme').setAttribute('aria-label', 'Toggle theme (currently: ' + state.theme + ')');
+}
+
+function saveFileNow(f){
+  if (!f || !isDirty(f)) return Promise.resolve(false);
+  f.baseline = f.content;
+  setSaveStatus('saving');
+  return persistNow().then(ok => {
+    if (ok){ setSaveStatus('saved'); updateEditorPill(); }
+    else setSaveStatus('error');
+    return ok;
+  });
+}
+function saveAllDirtyNow(){
+  const dirty = state.files.filter(isDirty);
+  if (!dirty.length) return Promise.resolve(0);
+  setSaveStatus('saving');
+  dirty.forEach(f => { f.baseline = f.content; });
+  return persistNow().then(ok => {
+    if (ok){ setSaveStatus('saved'); updateEditorPill(); }
+    else setSaveStatus('error');
+    return dirty.length;
+  });
+}
+
+function wire(){
+  $('#btnNew').onclick = () => openNewFileModal();
+  $('#btnSample').onclick = () => loadSampleFiles();
+  $('#btnImportFiles').onclick = () => $('#fileInput').click();
+  $('#btnImportFolder').onclick = () => $('#folderInput').click();
+  $('#fileInput').onchange = async e => { await importFiles(Array.from(e.target.files).map(f=>({file:f}))); e.target.value = ''; };
+  $('#folderInput').onchange = async e => { await importFiles(Array.from(e.target.files).map(f=>({file:f}))); e.target.value = ''; };
+
+  $('#btnSaveAs').onclick = () => {
+    const f = activeFile(); if (!f) return;
+    if (isDirty(f)) saveFileNow(f);
+    openPrompt({
+      title: 'Save As — New File in Workspace',
+      fields: [{ id:'name', label:'New file name', value:'copy-' + f.name }],
+      ok: vals => {
+        if (!vals.name.trim()) return;
+        snapshot();
+        const nf = addFile(uniqueName(vals.name.trim()), f.content, detectFormat(vals.name, f.content), f.categoryId);
+        nf.baseline = nf.content;
+        state.activeId = nf.id;
+        render(); persistNow(); setSaveStatus('saved'); toast('Saved as ' + nf.name, 'ok');
+      }
+    });
+  };
+  $('#btnExport').onclick = () => { const f = activeFile(); if (!f) return; downloadContent(f.name, f.content, (FORMATS[f.format]||FORMATS.txt).mime); };
+
+  $('#btnMerge').onclick = () => { const f = activeFile(); if (f && isDirty(f)) saveFileNow(f); openMergeModal('all'); };
+  $('#btnMergeSelected').onclick = () => { const f = activeFile(); if (f && isDirty(f)) saveFileNow(f); openMergeModal('checked'); };
+  $('#btnUndo').onclick = doUndo;
+  $('#btnRedo').onclick = doRedo;
+  $('#search').oninput = e => { state.search = e.target.value; renderSidebar(); };
+
+  $('#btnClearAll').onclick = () => clearAllFiles();
+  $('#btnRemoveSelected').onclick = () => removeSelectedFiles();
+  $('#btnRemoveAll').onclick = () => removeAllFiles();
+
+  $('#btnTheme').onclick = () => {
+    state.theme = state.theme === 'dark' ? 'light' : 'dark';
+    initTheme(); persistMeta();
+    toast('Theme: ' + state.theme, 'ok', 1500);
+  };
+  $('#btnRescan').onclick = () => {
+    let ok = 0, bad = 0;
+    for (const f of state.files){ const v = validateFile(f); if (v.valid===true) ok++; else if (v.valid===false) bad++; }
+    render();
+    toast(`Rescan: ${ok} valid, ${bad} invalid, ${state.files.length - ok - bad} not validated`, bad ? 'warn' : 'ok');
+  };
+
+  $('#btnReset').onclick = async () => {
+    const ok = await confirmDialog(
+      'Reset Workspace',
+      'Start a completely new workspace by permanently deleting all files, categories, history, and stored data?<br><br>' +
+      '<span style="color:var(--fg3);font-size:12px">The previous session will not be restorable by Undo or refresh. Original files on your computer are <b>not</b> affected.</span>',
+      'Reset & Reload'
+    );
+    if (!ok) return;
+
+    clearHistory();
+    state.files = [];
+    state.categories = [];
+    state.activeId = null;
+    state.checked = new Set();
+    state.mergeCount = 0;
+    render();
+    try {
+      safeLocalRemove(STORAGE.LOCAL_KEY);
+      try { await StorageDB.clear(); } catch(e){}
+      await persistNow();
+      toast('Workspace reset — starting fresh…', 'ok', 1500);
+      setTimeout(() => window.location.reload(), 350);
+    } catch(e) {
+      toast('Reset failed: storage could not be cleared', 'err', 4500);
+    }
+  };
+
+  $('#btnSidebar').onclick = () => $('#sidebar').classList.toggle('open');
+  $('#btnNewCat').onclick = () => {
+    openPrompt({
+      title: 'New Category',
+      fields: [{ id:'name', label:'Category name', value:'' }],
+      ok: vals => { if (!vals.name.trim()) return; snapshot(); state.categories.push({ id:uid(), name:vals.name.trim() }); render(); persistNow(); toast('Category created', 'ok'); }
+    });
+  };
+  $('#btnCheckAll').onclick = () => { state.files.forEach(f=>state.checked.add(f.id)); render(); persistNow(); };
+  $('#btnUncheckAll').onclick = () => { state.checked.clear(); render(); persistNow(); };
+
+  let lastFileClickId = null;
+  let lastFileClickTime = 0;
+
+  $('#fileList').addEventListener('click', e => {
+    const chk = e.target.closest('input[data-act="check"]');
+    if (chk){
+      e.stopPropagation();
+      if (chk.checked) state.checked.add(chk.dataset.id); else state.checked.delete(chk.dataset.id);
+      renderInspector(); updateStatusbar(); updateToolbarState(); persistNow();
+      return;
+    }
+    const catBtn = e.target.closest('button[data-act="renameCat"], button[data-act="delCat"]');
+    if (catBtn){
+      e.stopPropagation();
+      const act = catBtn.dataset.act, cid = catBtn.dataset.cat;
+      if (act === 'renameCat'){
+        const c = state.categories.find(x=>x.id===cid); if (!c) return;
+        openPrompt({ title:'Rename Category', fields:[{id:'name',label:'Category name',value:c.name}], ok: vals => { if (!vals.name.trim()) return; snapshot(); c.name = vals.name.trim(); render(); persistNow(); } });
+      } else if (act === 'delCat'){
+        const c = state.categories.find(x=>x.id===cid); if (!c) return;
+        confirmDialog('Delete Category', `Delete category <b>${esc(c.name)}</b>?<br><br><span style="color:var(--fg3);font-size:12px">Files inside are not deleted, they just return to "Uncategorized".</span>`, 'Delete')
+          .then(ok => { if (!ok) return; snapshot(); state.files.forEach(f=>{ if (f.categoryId===cid) f.categoryId = null; }); state.categories = state.categories.filter(x=>x.id!==cid); render(); persistNow(); });
+      }
+      return;
+    }
+    const removeBtn = e.target.closest('button[data-act="remove"]');
+    if (removeBtn){
+      e.stopPropagation();
+      e.preventDefault();
+      deleteFile(removeBtn.dataset.id);
+      return;
+    }
+    const dupBtn = e.target.closest('button[data-act="duplicate"]');
+    if (dupBtn){
+      e.stopPropagation();
+      e.preventDefault();
+      const f = fileById(dupBtn.dataset.id);
+      if (f) duplicateFile(f);
+      return;
+    }
+    const row = e.target.closest('.file-row');
+    if (!row) return;
+    if (state.editingFileId) return;
+
+    const id = row.dataset.id;
+    const now = Date.now();
+    const isDbl = (lastFileClickId === id && (now - lastFileClickTime) < 400);
+
+    if (isDbl){
+      lastFileClickId = null;
+      lastFileClickTime = 0;
+      e.preventDefault();
+      startInlineRename(id, row);
+      return;
+    }
+
+    lastFileClickId = id;
+    lastFileClickTime = now;
+    openFile(id);
+  });
+
+  $('#fileList').addEventListener('keydown', e => {
+    const row = e.target.closest('.file-row'); if (!row) return;
+    if (e.key === 'Enter' || e.key === ' '){ e.preventDefault(); openFile(row.dataset.id); }
+    else if (e.key === 'F2'){ e.preventDefault(); startInlineRename(row.dataset.id, row); }
+  });
+
+  $('#formatChips').addEventListener('click', e => { const chip = e.target.closest('.chip'); if (!chip) return; state.filterFormat = chip.dataset.fmt; renderSidebar(); });
+
+  $('#editorPane').addEventListener('mousedown', e => {
+    if (e.target.closest('#dirtyPill.save-hint')) e.preventDefault();
+  });
+  $('#saveStatus').addEventListener('mousedown', e => {
+    if ($('#saveStatus').classList.contains('dirty')) e.preventDefault();
+  });
+  $('#editorPane').addEventListener('click', e => {
+    const pill = e.target.closest('#dirtyPill.save-hint');
+    if (pill){ e.stopPropagation(); openSaveInfo(); }
+  });
+  $('#editorPane').addEventListener('keydown', e => {
+    const pill = e.target.closest('#dirtyPill.save-hint');
+    if (pill && (e.key === 'Enter' || e.key === ' ')){ e.preventDefault(); openSaveInfo(); }
+  });
+  $('#saveStatus').addEventListener('click', () => {
+    if ($('#saveStatus').classList.contains('dirty')) openSaveInfo();
+  });
+
+  $('#mScope').onchange = () => {
+    const v = $('#mScope').value;
+    $('#mScopeCatWrap').style.display = v==='category' ? '' : 'none';
+    $('#mScopeFmtWrap').style.display = v==='format' ? '' : 'none';
+    mergeState.order = []; refreshMergeSources();
+  };
+  $('#mScopeCat').onchange = () => { mergeState.order = []; refreshMergeSources(); };
+  $('#mScopeFmt').onchange = () => { mergeState.order = []; refreshMergeSources(); };
+  ['mOutFmt','mMode','mSep','mStrategy','mCsvStrategy','mMeta','mDedupe','mCompact','mOrder'].forEach(id => {
+    const el = $('#'+id);
+    if (el) el.onchange = () => {
+      if (id === 'mOutFmt'){ const ext = FORMATS[$('#mOutFmt').value].ext; $('#mOutName').value = 'compiled-output.' + ext; }
+      updateMergePreview();
+    };
+  });
+  $$('#mergeModal .tab').forEach(t => {
+    t.onclick = () => {
+      mergeState.tab = t.dataset.mtab;
+      $$('#mergeModal .tab').forEach(x=>{ const active = x===t; x.classList.toggle('active', active); x.setAttribute('aria-selected', active?'true':'false'); });
+      updateMergePreview();
+    };
+  });
+  $('#mCopy').onclick = async () => { if (!mergeState.result) return; try { await navigator.clipboard.writeText(mergeState.result.content); toast('Merge result copied', 'ok'); } catch(e){ toast('Copy failed', 'err'); } };
+  $('#mDownload').onclick = () => { if (!mergeState.result) return; const name = $('#mOutName').value.trim() || 'compiled-output.txt'; const fmt = $('#mOutFmt').value; downloadContent(name, mergeState.result.content, (FORMATS[fmt]||FORMATS.txt).mime); };
+  $('#mSaveAs').onclick = () => {
+    if (!mergeState.result) return;
+    const name = ($('#mOutName').value.trim() || 'compiled-output.txt');
+    const fmt = $('#mOutFmt').value;
+    snapshot();
+    const nf = addFile(uniqueName(name), mergeState.result.content, fmt);
+    nf.baseline = nf.content;
+    state.activeId = nf.id;
+    state.mergeCount++;
+    $('#mergeModal').classList.add('hidden');
+    render(); persistNow();
+    toast('Merge result saved as new file: ' + nf.name, 'ok');
+  };
+
+  $$('[data-close]').forEach(el => {
+    el.onclick = () => { const id = el.dataset.close; $('#'+id).classList.add('hidden'); };
+  });
+  document.addEventListener('keydown', e => {
+    if (e.key === 'Escape'){
+      if (state.editingFileId) return;
+      $$('.modal-root').forEach(m => m.classList.add('hidden'));
+      $('#sidebar').classList.remove('open');
+    }
+  });
+  document.addEventListener('keydown', e => {
+    if (state.editingFileId) return;
+    const mod = e.ctrlKey || e.metaKey;
+    if (!mod) return;
+    if (e.key === 'z' && !e.shiftKey){ e.preventDefault(); doUndo(); }
+    else if (e.key === 'y' || (e.key === 'z' && e.shiftKey)){ e.preventDefault(); doRedo(); }
+    else if (e.key === 's'){
+      e.preventDefault();
+      saveAllDirtyNow().then(n => {
+        toast(n > 0 ? 'Saved ' + n + ' file' + (n>1?'s':'') : 'All changes already saved', 'ok', 1500);
+      });
+    }
+    else if (e.key === 'm'){ e.preventDefault(); openMergeModal('all'); }
+    else if (e.key === 'n'){ e.preventDefault(); openNewFileModal(); }
+    else if (e.key === 'f'){ e.preventDefault(); $('#search').focus(); }
+    else if (e.key === 'd' && e.shiftKey){
+      const f = activeFile();
+      if (f){ e.preventDefault(); duplicateFile(f); }
+    }
+  });
+
+  document.addEventListener('visibilitychange', () => {
+    if (document.hidden && state.files.length > 0) saveAllDirtyNow();
+  });
+  window.addEventListener('blur', () => { if (state.files.length > 0) saveAllDirtyNow(); });
+
+  const upd = () => { const on = navigator.onLine; $('#conn').classList.toggle('off', !on); $('#connText').textContent = on ? 'Online' : 'Offline'; };
+  window.addEventListener('online', upd);
+  window.addEventListener('offline', upd);
+  upd();
+
+  window.addEventListener('pagehide', () => {
+    // Sync write so the very latest state (including any deletions) is
+    // available if the tab reloads or the browser crashes right after.
+    try { safeLocalSet(STORAGE.LOCAL_KEY, JSON.stringify(serializeWorkspace())); } catch(e){}
+  });
+
+  bindSidebarDnD();
+  bindMergeDnD();
+  bindGlobalDrop();
+  window.addEventListener('resize', () => { if (window.innerWidth > 720) $('#sidebar').classList.remove('open'); });
+}
+
+/* =========================================================================
+   BOOT
+   ========================================================================= */
+(async function boot(){
+  wire();
+  const restored = await restoreWorkspace();
+  initTheme();
+
+  render();
+  updateToolbarState();
+  setSaveStatus();
+
+  if (restored){
+    if (state.files.length === 0) toast('Empty workspace restored', 'ok');
+    else toast('Workspace restored from local storage', 'ok');
+  } else {
+    toast('New workspace — click "Start with Sample" to try examples', 'ok', 3600);
+  }
+})();
+</script>
+</body>
+</html>
